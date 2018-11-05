@@ -50,12 +50,12 @@ end
     mf, vf = mean(x, weights(w)), var(x, fweights(w), corrected = true)
     mp, vp = mean(x, weights(w)), var(x, pweights(w), corrected = true)
 
-
     o = WeightedVariance()
     for i in 1:l
         fit!(o, x[i], w[i])
     end
-    mfor, vfor = mean(o), (o.S / o.W)
+    mfor, vfor = mean(o), var(o)
+
     mval, vval = fit!(WeightedVariance(), x, w) |> x -> (mean(x), var(x))
     mzip, vzip = fit!(WeightedVariance(), zip(x, w)) |> x -> (mean(x), var(x))
 
@@ -108,7 +108,6 @@ end
     @test rv2.S ≈ wv.S
     @test rv2.W ≈ wv.W
     @test rv2.W2 ≈ wv.W2
-
 
     @test var(rv) ≈ v
     @test var(rv2) ≈ v

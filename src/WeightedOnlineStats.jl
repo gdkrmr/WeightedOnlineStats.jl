@@ -93,8 +93,8 @@ function _fit!(o::WeightedVariance{T}, x, w) where T
     μ = o.μ
 
     o.μ = smooth(μ, x, w / o.W)
-    # o.S += w * (x - μ) * (x - o.μ)
-    o.S += smooth(o.S, (x - o.μ) * (x - μ), w)
+    o.S += w * (x - μ) * (x - o.μ)
+    # o.S = smooth(o.S, (x - o.μ) * (x - μ), w)
 
     return o
 end
@@ -105,14 +105,25 @@ end
 #     o.σ2 = smooth(o.σ2, (x - o.μ) * (x - μ), γ)
 # end
 function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
+    # o.W += o2.W
+    # o.W2 += o2.W2
+
+    # γ = o2.W / o.W
+    # δ = o2.μ - o.μ
+
+    # o.S = smooth(o.S, o2.S, γ) + δ ^ 2 * γ * (1.0 - γ)
+    # o.μ = smooth(o.μ, o2.μ, γ)
+
+    ########
+
     o.W += o2.W
     o.W2 += o2.W2
 
-    γ = o2.W / o.W
-    δ = o2.μ - o.μ
+    μ = o.μ
+    o.μ = smooth(o.μ, o2.μ, o2.W / o.W)
+    o.S += o2.S + o2.W * (o2.μ - μ) * (o2.μ - o.μ)
 
-    o.S = smooth(o.S, o2.S, γ) + δ ^ 2 * γ * (1.0 - γ)
-    o.μ = smooth(o.μ, o2.μ, γ)
+    ########
 
     # o.S += o2_W / o.W * (o2_S - o.S)
     # o.S = smooth(o.S, o2_S, o2_W / o.W)
@@ -140,21 +151,21 @@ end
 #     o.μ = smooth(o.μ, o2.μ, γ)
 #     o
 # end
-value(o::WeightedVariance) = o.S
+value(o::WeightedVariance) = var(o)
 mean(o::WeightedVariance) = o.μ
 function var(o::WeightedVariance; corrected = false, weight_type = :analytic)
     if corrected
         if weight_type == :analytic
-            value(o) / (weightsum(o) - o.W2 / weightsum(o))
+            o.S / (weightsum(o) - o.W2 / weightsum(o))
         elseif weight_type == :frequency
-            value(o) / (weightsum(o) - 1)
+            o.S / (weightsum(o) - 1)
         elseif weight_type == :probability
             error("If you need this, please make a PR")
         else
             throw(ArgumentError("weight type $weight_type not implemented"))
         end
     else
-        value(o) / weightsum(o)
+        o.S / weightsum(o)
     end
 end
 
