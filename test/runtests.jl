@@ -54,6 +54,7 @@ end
     for i in 1:l
         fit!(o, x[i], w[i])
     end
+    o
     mfor, vfor = mean(o), var(o)
 
     mval, vval = fit!(WeightedVariance(), x, w) |> x -> (mean(x), var(x))
@@ -100,12 +101,12 @@ end
         fit!(WeightedVariance(), x[end ÷ 2 + 1:end], w[end ÷ 2 + 1:end]))
 
     @test rv.μ ≈ wv.μ
-    @test rv.S ≈ wv.S
+    @test rv.σ2 ≈ wv.σ2
     @test rv.W ≈ wv.W
     @test rv.W2 ≈ wv.W2
 
     @test rv2.μ ≈ wv.μ
-    @test rv2.S ≈ wv.S
+    @test rv2.σ2 ≈ wv.σ2
     @test rv2.W ≈ wv.W
     @test rv2.W2 ≈ wv.W2
 

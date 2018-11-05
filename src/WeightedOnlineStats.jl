@@ -79,7 +79,7 @@ Base.copy(o::WeightedMean) = WeightedMean(o.μ, o.W)
 ##############################################################
 mutable struct WeightedVariance{T} <: WeightedOnlineStat{T}
     μ::T
-    S::T
+    σ2::T
     W::T
     W2::T
 end
@@ -90,11 +90,12 @@ function _fit!(o::WeightedVariance{T}, x, w) where T
 
     o.W += w
     o.W2 += w * w
+    γ = w / o.W
     μ = o.μ
 
-    o.μ = smooth(μ, x, w / o.W)
-    o.S += w * (x - μ) * (x - o.μ)
-    # o.S = smooth(o.S, (x - o.μ) * (x - μ), w)
+    o.μ = smooth(o.μ, x, γ)
+    # o.S += w * (x - μ) * (x - o.μ)
+    o.σ2 = smooth(o.σ2, (x - o.μ) * (x - μ), γ)
 
     return o
 end
@@ -105,23 +106,25 @@ end
 #     o.σ2 = smooth(o.σ2, (x - o.μ) * (x - μ), γ)
 # end
 function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
-    # o.W += o2.W
-    # o.W2 += o2.W2
-
-    # γ = o2.W / o.W
-    # δ = o2.μ - o.μ
-
-    # o.S = smooth(o.S, o2.S, γ) + δ ^ 2 * γ * (1.0 - γ)
-    # o.μ = smooth(o.μ, o2.μ, γ)
-
-    ########
-
     o.W += o2.W
     o.W2 += o2.W2
 
-    μ = o.μ
-    o.μ = smooth(o.μ, o2.μ, o2.W / o.W)
-    o.S += o2.S + o2.W * (o2.μ - μ) * (o2.μ - o.μ)
+    γ = o2.W / o.W
+    δ = o2.μ - o.μ
+
+    o.σ2 = smooth(o.σ2, o2.σ2, γ) + (δ ^ 2) * γ * (1.0 - γ)
+    o.μ = smooth(o.μ, o2.μ, γ)
+
+    ########
+
+    # o.W += o2.W
+    # o.W2 += o2.W2
+
+    # μ = o.μ
+    # o.μ = smooth(o.μ, o2.μ, o2.W / o.W)
+    # o.S =
+    #     smooth(o.S, o2.S, o2.W / o.W) +
+    #     smooth(o.S, (o2.μ - μ) * (o2.μ - o.μ), o2.W / o.W)
 
     ########
 
@@ -151,22 +154,27 @@ end
 #     o.μ = smooth(o.μ, o2.μ, γ)
 #     o
 # end
-value(o::WeightedVariance) = var(o)
+value(o::WeightedVariance) = o.σ2
 mean(o::WeightedVariance) = o.μ
 function var(o::WeightedVariance; corrected = false, weight_type = :analytic)
     if corrected
         if weight_type == :analytic
-            o.S / (weightsum(o) - o.W2 / weightsum(o))
+            # o.S / (weightsum(o) - o.W2 / weightsum(o))
+            # o.S / ((weightsum(o) ^ 2) - o.W2)
+            # o.S / (weightsum(o) - o.W2 / weightsum(o)) * weightsum(o)
+            value(o) / (1 - o.W2 / (weightsum(o) ^ 2))
         elseif weight_type == :frequency
-            o.S / (weightsum(o) - 1)
+            value(o) / (weightsum(o) - 1) * weightsum(o)
+            # o.S / (weightsum(o) - 1) * (weightsum(o) ^ 2)
         elseif weight_type == :probability
-            error("If you need this, please make a PR")
+            error("If you need this, please make a PR or open an issue")
         else
             throw(ArgumentError("weight type $weight_type not implemented"))
         end
     else
-        o.S / weightsum(o)
+        value(o)
     end
 end
+std(o::WeightedOnlineStat; kw...) = sqrt.(var(o; kw...))
 
 end # module WeightedOnlineStats
