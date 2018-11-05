@@ -1,7 +1,7 @@
-using Revise
-using Pkg
-cd("..")
-Pkg.activate(".")
+# using Revise
+# using Pkg
+# cd("..")
+# Pkg.activate(".")
 using Test
 using WeightedOnlineStats
 using StatsBase
