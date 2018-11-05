@@ -57,7 +57,8 @@ mutable struct WeightedMean{T} <: WeightedOnlineStat{T}
     W::T
 end
 
-WeightedMean(T::Type = Float64) = WeightedMean(T(0), T(0))
+WeightedMean(::Type{T}) where T = WeightedMean(T(0), T(0))
+WeightedMean() = WeightedMean(Float64)
 function _fit!(o::WeightedMean{T}, x, w) where T
     w = convert(T, w)
     o.W += w
@@ -83,7 +84,9 @@ mutable struct WeightedVariance{T} <: WeightedOnlineStat{T}
     W::T
     W2::T
 end
-WeightedVariance(T::Type = Float64) = WeightedVariance(T(0), T(0), T(0), T(0))
+
+WeightedVariance(::Type{T}) where T = WeightedVariance(T(0), T(0), T(0), T(0))
+WeightedVariance() = WeightedVariance(Float64)
 function _fit!(o::WeightedVariance{T}, x, w) where T
     x = convert(T, x)
     w = convert(T, w)
