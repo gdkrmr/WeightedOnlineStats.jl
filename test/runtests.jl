@@ -86,14 +86,11 @@ end
 end
 
 @testset "WeighedVariance merge!" begin
-    l = 1000
-    x = rand(l);
-    w = rand(l);
     v = var(x, weights(w), corrected = false)
 
     wv = fit!(WeightedVariance(), x, w)
     ov = map(x, w) do xi, wi
-        WeightedVariance(xi, xi * xi * wi, wi, wi * wi)
+        fit!(WeightedVariance(), xi, wi)
     end;
     rv = reduce(merge!, deepcopy(ov))
     rv2 = merge!(

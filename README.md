@@ -16,7 +16,7 @@ WARNING: WORK IN PROGRESS
   - [x] `merge!`
 - `WeightedVariance`
   - [x] `fit!`
-  - [ ] `merge!`
+  - [x] `merge!`
 - `WeightedCovarianceMatrix`
   - [ ] `fit!`
   - [ ] `merge!`
