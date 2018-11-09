@@ -11,6 +11,39 @@ l = 1000
 x = rand(l);
 w = rand(l);
 
+@testset "WeightedSum fit!" begin
+    s = sum(broadcast(*, x, w))
+
+    szip = sum(fit!(WeightedSum(), zip(x, w)))
+    o = WeightedSum()
+    for i in 1:l
+        fit!(o, x[i], w[i])
+    end
+    sfor = sum(o)
+    sval = sum(fit!(WeightedSum(), x, w))
+
+    @test s ≈ szip
+    @test s ≈ sfor
+    @test s ≈ sval
+end
+
+@testset "WeightedSum merge!" begin
+    s = sum(broadcast(*, x, w))
+
+    smap = map(x, w) do xi, wi
+        WeightedSum(xi, wi)
+    end;
+
+    rs = reduce(merge!, smap) |> sum
+    rs2 = merge!(
+        fit!(WeightedSum(), x[1:end ÷ 2], w[1:end ÷ 2]),
+        fit!(WeightedSum(), x[end ÷ 2 + 1:end], w[end ÷ 2 + 1:end])
+    ) |> sum
+
+    @test rs ≈ s
+    @test rs2 ≈ s
+end
+
 @testset "WeighedMean fit!" begin
     m = mean(x, weights(w))
 
