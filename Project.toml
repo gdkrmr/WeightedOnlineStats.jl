@@ -1,7 +1,7 @@
 name = "WeightedOnlineStats"
 uuid = "5434924c-de82-11e8-25f8-6dd717317060"
 authors = ["Guido Kraemer <gdkrmr@users.noreply.github.com>"]
-version = "0.0.0"
+version = "0.0.1"
 
 [deps]
 OnlineStatsBase = "925886fa-5bf2-5e8e-b522-a9147a512338"
