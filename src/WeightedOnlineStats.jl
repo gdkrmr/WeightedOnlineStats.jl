@@ -53,7 +53,6 @@ mutable struct WeightedSum{T} <: WeightedOnlineStat{T}
     ∑::T
     W::T
     function WeightedSum{T}(∑ = T(0), W = T(0)) where T
-        ∑ = ∑ * W
         new{T}(∑, W)
     end
 end
