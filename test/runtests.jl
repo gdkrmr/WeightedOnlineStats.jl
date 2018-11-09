@@ -57,6 +57,11 @@ end
 
     @test rm ≈ m
     @test rm2 ≈ m
+
+    o = merge!(WeightedMean(Float64), WeightedMean(Float32))
+    o2 = merge!(WeightedMean(Float32), WeightedMean(Float64))
+    @test eltype(o) == Float64
+    @test eltype(o2) == Float32
 end
 
 @testset "WeightedVariance fit!" begin
@@ -124,6 +129,11 @@ end
 
     @test var(rv) ≈ v
     @test var(rv2) ≈ v
+
+    o = merge!(WeightedVariance(Float64), WeightedVariance(Float32))
+    o2 = merge!(WeightedVariance(Float32), WeightedVariance(Float64))
+    @test eltype(o) == Float64
+    @test eltype(o2) == Float32
 end
 
 @testset "Constructors" begin
@@ -137,4 +147,13 @@ end
     @test WeightedVariance{Float32}() == WeightedVariance(Float32)
     @test WeightedVariance() == WeightedVariance(0.0, 0.0, 0.0, 0.0)
     @test WeightedVariance() == WeightedVariance{Float64}(0, 0, 0, 0)
+
+    @test eltype(WeightedMean()) == Float64
+    @test eltype(WeightedMean(Float32)) == Float32
+    @test eltype(WeightedMean{Float32}()) == Float32
+    @test eltype(WeightedMean{Float32}) == Float32
+    @test eltype(WeightedVariance()) == Float64
+    @test eltype(WeightedVariance(Float32)) == Float32
+    @test eltype(WeightedVariance{Float32}()) == Float32
+    @test eltype(WeightedVariance{Float32}) == Float32
 end

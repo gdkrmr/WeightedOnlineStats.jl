@@ -9,6 +9,8 @@ smooth(a, b, γ) = a + γ * (b - a)
 
 abstract type WeightedOnlineStat{T} <: OnlineStat{T} end
 weightsum(o::WeightedOnlineStat) = o.W
+Base.eltype(o::WeightedOnlineStat{T}) where T = T
+Base.eltype(::Type{S}) where S <: WeightedOnlineStat{T} where T = T
 
 
 ##############################################################
