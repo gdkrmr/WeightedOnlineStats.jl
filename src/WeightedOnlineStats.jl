@@ -101,8 +101,9 @@ function _fit!(o::WeightedMean{T}, x, w) where T
 end
 
 function _merge!(o::WeightedMean{T}, o2::WeightedMean) where T
-    o.W += convert(T, o2.W)
-    o.μ = smooth(o.μ, convert(T, o2.μ), o2.W / o.W)
+    o2_W = convert(T, o2.W)
+    o.W += o2_W
+    o.μ = smooth(o.μ, convert(T, o2.μ), o2_W / o.W)
     o
 end
 value(o::WeightedMean) = o.μ
