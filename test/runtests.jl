@@ -31,7 +31,7 @@ end
     s = sum(broadcast(*, x, w))
 
     smap = map(x, w) do xi, wi
-        WeightedSum(xi, wi)
+        fit!(WeightedSum(), xi, wi)
     end;
 
     rs = reduce(merge!, smap) |> sum
@@ -79,7 +79,7 @@ end
     m = mean(x, weights(w))
 
     om = map(x, w) do xi, wi
-        WeightedMean(xi, wi)
+        fit!(WeightedMean(), xi, wi)
     end;
 
     rm = reduce(merge!, om) |> mean
