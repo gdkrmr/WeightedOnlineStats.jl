@@ -1,6 +1,6 @@
 module WeightedOnlineStats
 
-export WeightedMean, WeightedVariance
+export WeightedSum, WeightedMean, WeightedVariance
 
 import OnlineStatsBase: OnlineStat, name, fit!, merge!, _fit!, _merge!
 import Statistics: mean, var, std
@@ -47,6 +47,35 @@ function Base.show(io::IO, o::WeightedOnlineStat)
 end
 
 ##############################################################
+# Weighted Sum
+##############################################################
+mutable struct WeightedSum{T} <: WeightedOnlineStat{T}
+    ∑::T
+    W::T
+    function WeightedSum{T}(∑ = T(0), W = T(0)) where T
+        new{T}(∑, W)
+    end
+end
+
+WeightedSum(∑::T, W::T) where T = WeightedSum{T}(∑, W)
+WeightedSum(::Type{T}) where T = WeightedSum(T(0), T(0))
+WeightedSum() = WeightedSum(Float64)
+function _fit!(o::WeightedSum{T}, x, w) where T
+    o.W += w
+    o.∑ += x * w
+    o
+end
+
+function _merge!(o::WeightedSum{T}, o2::WeightedSum) where T
+    o.W += convert(T, o2.W)
+    o.∑ += convert(T, o2.∑)
+    o
+end
+value(o::WeightedSum) = o.∑
+Base.sum(o::WeightedSum) = value(o)
+Base.copy(o::WeightedSum) = WeightedSum(o.∑, o.W)
+
+##############################################################
 # Weighted Mean
 ##############################################################
 mutable struct WeightedMean{T} <: WeightedOnlineStat{T}
@@ -68,8 +97,9 @@ function _fit!(o::WeightedMean{T}, x, w) where T
 end
 
 function _merge!(o::WeightedMean{T}, o2::WeightedMean) where T
-    o.W += convert(T, o2.W)
-    o.μ = smooth(o.μ, convert(T, o2.μ), o2.W / o.W)
+    o2_W = convert(T, o2.W)
+    o.W += o2_W
+    o.μ = smooth(o.μ, convert(T, o2.μ), o2_W / o.W)
     o
 end
 value(o::WeightedMean) = o.μ
