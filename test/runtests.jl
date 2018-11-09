@@ -47,17 +47,32 @@ end
 @testset "WeighedMean fit!" begin
     m = mean(x, weights(w))
 
-    mzip = mean(fit!(WeightedMean(), zip(x, w)))
     o = WeightedMean()
     for i in 1:l
         fit!(o, x[i], w[i])
     end
     mfor = mean(o)
     mval = mean(fit!(WeightedMean(), x, w))
+    mzip = mean(fit!(WeightedMean(), zip(x, w)))
 
     @test m ≈ mzip
     @test m ≈ mfor
     @test m ≈ mval
+
+    o2 = WeightedMean(Float32)
+    for i in 1:l
+        fit!(o2, x[i], w[i])
+    end
+    m2for = mean(o2)
+    m2val = mean(fit!(WeightedMean(Float32), x, w))
+    m2zip = mean(fit!(WeightedMean(Float32), zip(x, w)))
+
+    @test m ≈ m2zip
+    @test m ≈ m2for
+    @test m ≈ m2val
+    @test typeof(m2for) == Float32
+    @test typeof(m2val) == Float32
+    @test typeof(m2zip) == Float32
 end
 
 @testset "WeighedMean merge!" begin
