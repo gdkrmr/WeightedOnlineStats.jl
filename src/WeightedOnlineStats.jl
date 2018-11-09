@@ -16,22 +16,19 @@ weightsum(o::WeightedOnlineStat) = o.W
 ##############################################################
 
 # fit single value and weight
-function fit!(o::WeightedOnlineStat{T}, x::T, w::T) where T
+function fit!(o::WeightedOnlineStat{T}, x::S1, w::S2) where {T, S1<:Number, S2<:Number}
     _fit!(o, x, w)
     o
 end
 # fit a tuple, allows fit(o, zip(x, w))
 function fit!(o::WeightedOnlineStat{T}, x::S) where {T, S}
-    T == eltype(x) && error("The input for $(name(o,false,false)) is a $T.  Found $S.")
     for xi in x
-        fit!(o, xi...)
+        _fit!(o, xi...)
     end
     o
 end
-# fit two arrays, allows fit(o, x::Array, y::Array)
+# fit two iterators, allows fit(o, x::Array, y::Array)
 function fit!(o::WeightedOnlineStat{T}, x, w) where {T}
-    (T == eltype(x) && T == eltype(w)) ||
-        error("The input for $(name(o,false,false)) is a $T.  Found $(eltype(x)) and $(eltype(w)).")
     for (xi, wi) in zip(x, w)
         fit!(o, xi, wi)
     end
