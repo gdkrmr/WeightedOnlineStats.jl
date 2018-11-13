@@ -1,11 +1,24 @@
 module WeightedOnlineStats
 
-export WeightedSum, WeightedMean, WeightedVariance
+export WeightedSum, WeightedMean, WeightedVariance, WeightedCovarianceMatrix
 
 import OnlineStatsBase: OnlineStat, name, fit!, merge!, _fit!, _merge!
 import Statistics: mean, var, std
+import LinearAlgebra: Hermitian, rmul!
 
 smooth(a, b, γ) = a + γ * (b - a)
+
+function smooth!(a, b, γ)
+    for i in eachindex(a)
+        a[i] = smooth(a[i], b[i], γ)
+    end
+end
+
+function smooth_syr!(A::AbstractMatrix, x, γ::Number)
+    for j in 1:size(A, 2), i in 1:j
+        A[i, j] = smooth(A[i,j], x[i] * conj(x[j]), γ)
+    end
+end
 
 abstract type WeightedOnlineStat{T} <: OnlineStat{T} end
 weightsum(o::WeightedOnlineStat) = o.W
@@ -34,6 +47,19 @@ function fit!(o::WeightedOnlineStat{T}, x, w) where {T}
     end
     o
 end
+
+function fit!(o::WeightedOnlineStat{T}, x::Vector{T}, w::T) where {T}
+    _fit!(o, x, w)
+    o
+end
+
+function fit!(o::WeightedOnlineStat{T}, x::Matrix{T}, w::Vector{T}) where {T}
+    for j in 1:size(data,2)
+        fit!(o, data[j,:], w[j])
+    end
+    o
+end
+
 function merge!(o::WeightedOnlineStat, o2::WeightedOnlineStat)
     (weightsum(o) > 0 || weightsum(o) > 0) && _merge!(o, o2)
     o
@@ -216,5 +242,45 @@ function var(o::WeightedVariance; corrected = false, weight_type = :analytic)
     end
 end
 std(o::WeightedOnlineStat; kw...) = sqrt.(var(o; kw...))
+
+##############################################################
+# Weighted Covariance Matrix
+##############################################################
+mutable struct WeightedCovarianceMatrix{T} <: WeightedOnlineStat{T}
+    C::Matrix{T}
+    A::Matrix{T}
+    b::Vector{T}
+    W::T
+    n::Int
+    function WeightedCovarianceMatrix{T}(
+            C = zeros(T, 0, 0), A = zeros(T, 0, 0),
+            b = zeros(T, 0), W = T(0), n = Int(0)
+        ) where T
+        new{T}(C, A, b, W, n)
+    end
+end
+
+WeightedCovarianceMatrix(C::Matrix{T}, A::Matrix{T}, b::Vector{T}, W::T, n::Int) where T = WeightedCovarianceMatrix{T}(C, A, b, W, n)
+WeightedCovarianceMatrix(::Type{T}, p::Int=0) where T = WeightedCovarianceMatrix(zeros(T, p, p), zeros(T, p, p), zeros(T, p), T(0), Int(0))
+WeightedCovarianceMatrix() = WeightedCovarianceMatrix(Float64)
+
+function _fit!(o::WeightedCovarianceMatrix{T}, x, w) where T
+    o.W += w
+    γ = w / o.W
+    if isempty(o.A)
+        p = length(x)
+        o.b = zeros(T, p)
+        o.A = zeros(T, p, p)
+        o.C = zeros(T, p, p)
+    end
+    smooth!(o.b, x, γ)
+    smooth_syr!(o.A, x, γ)
+end
+nvars(o::WeightedCovarianceMatrix) = size(o.A, 1)
+function value(o::WeightedCovarianceMatrix, corrected::Bool = true)
+    o.C[:] = Matrix(Hermitian((o.A - o.b * o.b')))
+    corrected && rmul!(o.C, (weightsum(o)^2 / (1-weightsum(o)^2)))
+    o.C
+end
 
 end # module WeightedOnlineStats
