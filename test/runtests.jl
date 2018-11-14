@@ -160,6 +160,9 @@ end
 end
 
 @testset "Constructors" begin
+    @test WeightedSum{Float64}() == WeightedSum()
+    @test WeightedSum{Float32}() == WeightedSum(Float32)
+    @test WeightedSum() == WeightedSum(0.0, 0.0)
 
     @test WeightedMean{Float64}() == WeightedMean()
     @test WeightedMean{Float32}() == WeightedMean(Float32)
