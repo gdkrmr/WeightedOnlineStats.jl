@@ -268,7 +268,12 @@ WeightedCovarianceMatrix(::Type{T}, p::Int=0) where T = WeightedCovarianceMatrix
 WeightedCovarianceMatrix() = WeightedCovarianceMatrix(Float64)
 
 function _fit!(o::WeightedCovarianceMatrix{T}, x, w) where T
+    x = convert(T, x)
+    w = convert(T, w)
+
     o.W += w
+    o.W2 += w * w
+    o.n += 1
     γ = w / o.W
     if isempty(o.A)
         p = length(x)
