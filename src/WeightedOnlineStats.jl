@@ -300,8 +300,12 @@ nvars(o::WeightedCovarianceMatrix) = size(o.A, 1)
 
 function value(o::WeightedCovarianceMatrix, corrected::Bool = true)
     o.C[:] = Matrix(Hermitian((o.A - o.b * o.b')))
-    corrected && rmul!(o.C, (weightsum(o)^2 / (1-weightsum(o)^2)))
+    corrected && rmul!(o.C, 1 / (1 - o.W2 / (weightsum(o) ^ 2)))
     o.C
 end
+
+mean(o::WeightedCovarianceMatrix) = o.b
+cov(o::WeightedCovarianceMatrix) = value(o)
+Base.copy(o::WeightedCovarianceMatrix) = WeightedCovarianceMatrix(o.C, o.A, o.b, o.W, o.n)
 
 end # module WeightedOnlineStats
