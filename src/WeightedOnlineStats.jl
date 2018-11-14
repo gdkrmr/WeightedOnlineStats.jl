@@ -15,37 +15,50 @@ weightsum(o::WeightedOnlineStat) = o.W
 # Define our own interface so that it accepts two inputs.
 ##############################################################
 
-# fit single value and weight
-function fit!(o::WeightedOnlineStat{T}, x::S1, w::S2) where {T, S1<:Number, S2<:Number}
-    _fit!(o, x, w)
-    o
-end
-# fit a tuple, allows fit(o, zip(x, w))
-function fit!(o::WeightedOnlineStat{T}, x::S) where {T, S}
-    for xi in x
-        _fit!(o, xi...)
-    end
-    o
-end
-# fit two iterators, allows fit(o, x::Array, y::Array)
-function fit!(o::WeightedOnlineStat{T}, x, w) where {T}
-    for (xi, wi) in zip(x, w)
-        fit!(o, xi, wi)
+# # fit single value and weight
+# function fit!(o::WeightedOnlineStat{T}, x::S1, w::S2) where {T, S1<:Number, S2<:Number}
+#     _fit!(o, x, w)
+#     o
+# end
+# # fit a tuple, allows fit(o, zip(x, w))
+# function fit!(o::WeightedOnlineStat{T}, x::S) where {T, S}
+#     for xi in x
+#         _fit!(o, xi...)
+#     end
+#     o
+# end
+# # fit two iterators, allows fit(o, x::Array, y::Array)
+# function fit!(o::WeightedOnlineStat{T}, x, w) where {T}
+#     for (xi, wi) in zip(x, w)
+#         fit!(o, xi, wi)
+#     end
+#     o
+# end
+#
+# function fit!(o::WeightedOnlineStat{T}, x::Vector{T}, w::T) where {T<:Number}
+#     _fit!(o, x, w)
+#     o
+# end
+#
+# function fit!(o::WeightedOnlineStat{T}, x::Matrix{T}, w::Vector{T}) where {T<:Number}
+#     for j in 1:size(x,1)
+#         fit!(o, x[j,:], w[j])
+#     end
+#     o
+# end
+fit!(o::WeightedOnlineStat{T}, xi::S1, wi::S2) where {T, S1<:Number, S2<:Number} = (_fit!(o, xi, wi); return o)
+fit!(o::WeightedOnlineStat{VectorOb}, x::VectorOb, w::Number) = (_fit!(o, x, w); return o)
+
+function fit!(o::WeightedOnlineStat{I}, y::T, w::S) where {I, T, S}
+    T == eltype(y) && error("The input for $(name(o,false,false)) is a $I.  Found $T.")
+    for i in 1:length(w)
+        fit!(o, y[i], w[i])
     end
     o
 end
 
-function fit!(o::WeightedOnlineStat{T}, x::Vector{T}, w::T) where {T}
-    _fit!(o, x, w)
-    o
-end
-
-function fit!(o::WeightedOnlineStat{T}, x::Matrix{T}, w::Vector{T}) where {T}
-    for j in 1:size(data,2)
-        fit!(o, data[j,:], w[j])
-    end
-    o
-end
+fit!(o::WeightedOnlineStat{T}, x::TwoThings{R,S}) where {T, R, S} = fit!(o, x[1], x[2])
+fit!(o::WeightedOnlineStat{VectorOb}, x::AbstractMatrix, w::AbstractVector) = fit!(o, eachrow(x), w)
 
 function merge!(o::WeightedOnlineStat, o2::WeightedOnlineStat)
     (weightsum(o) > 0 || weightsum(o) > 0) && _merge!(o, o2)
