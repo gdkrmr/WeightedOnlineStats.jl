@@ -279,7 +279,25 @@ function _fit!(o::WeightedCovarianceMatrix{T}, x, w) where T
     smooth!(o.b, x, γ)
     smooth_syr!(o.A, x, γ)
 end
+
+function _merge!(o::WeightedCovarianceMatrix{T}, o2::WeightedCovarianceMatrix) where T
+    o2_A = convert(Matrix{T}, o2.A)
+    o2_b = convert(Vector{T}, o2.b)
+    o2_W = convert(T, o2.W)
+    o2_W2 = convert(T, o2.W2)
+
+    W = o.W + o2_W
+    γ = o2_W / W
+    smooth!(o.A, o2_A, γ)
+    smooth!(o.b, o2_b, γ)
+    o.W = W
+    o.W2 += o2_W2
+    o.n += o2.n
+    o
+end
+
 nvars(o::WeightedCovarianceMatrix) = size(o.A, 1)
+
 function value(o::WeightedCovarianceMatrix, corrected::Bool = true)
     o.C[:] = Matrix(Hermitian((o.A - o.b * o.b')))
     corrected && rmul!(o.C, (weightsum(o)^2 / (1-weightsum(o)^2)))
