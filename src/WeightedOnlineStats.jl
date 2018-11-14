@@ -246,22 +246,24 @@ std(o::WeightedOnlineStat; kw...) = sqrt.(var(o; kw...))
 ##############################################################
 # Weighted Covariance Matrix
 ##############################################################
-mutable struct WeightedCovarianceMatrix{T} <: WeightedOnlineStat{T}
+mutable struct WeightedCovarianceMatrix{T} <: WeightedOnlineStat{VectorOb}
     C::Matrix{T}
     A::Matrix{T}
     b::Vector{T}
     W::T
+    W2::T
     n::Int
     function WeightedCovarianceMatrix{T}(
             C = zeros(T, 0, 0), A = zeros(T, 0, 0),
-            b = zeros(T, 0), W = T(0), n = Int(0)
+            b = zeros(T, 0), W = T(0), W2 = T(0),
+            n = Int(0)
         ) where T
-        new{T}(C, A, b, W, n)
+        new{T}(C, A, b, W, W2, n)
     end
 end
 
-WeightedCovarianceMatrix(C::Matrix{T}, A::Matrix{T}, b::Vector{T}, W::T, n::Int) where T = WeightedCovarianceMatrix{T}(C, A, b, W, n)
-WeightedCovarianceMatrix(::Type{T}, p::Int=0) where T = WeightedCovarianceMatrix(zeros(T, p, p), zeros(T, p, p), zeros(T, p), T(0), Int(0))
+WeightedCovarianceMatrix(C::Matrix{T}, A::Matrix{T}, b::Vector{T}, W::T, W2::T, n::Int) where T = WeightedCovarianceMatrix{T}(C, A, b, W, n)
+WeightedCovarianceMatrix(::Type{T}, p::Int=0) where T = WeightedCovarianceMatrix(zeros(T, p, p), zeros(T, p, p), zeros(T, p), T(0), T(0), Int(0))
 WeightedCovarianceMatrix() = WeightedCovarianceMatrix(Float64)
 
 function _fit!(o::WeightedCovarianceMatrix{T}, x, w) where T
