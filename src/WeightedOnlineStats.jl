@@ -2,23 +2,10 @@ module WeightedOnlineStats
 
 export WeightedSum, WeightedMean, WeightedVariance, WeightedCovarianceMatrix
 
-import OnlineStatsBase: OnlineStat, name, fit!, merge!, _fit!, _merge!
+import OnlineStats: smooth, smooth!, smooth_syr!, Tup, VectorOb, TwoThings
+import OnlineStatsBase: OnlineStat, name, fit!, merge!, _fit!, _merge!, eachrow, eachcol
 import Statistics: mean, var, std
 import LinearAlgebra: Hermitian, rmul!
-
-smooth(a, b, γ) = a + γ * (b - a)
-
-function smooth!(a, b, γ)
-    for i in eachindex(a)
-        a[i] = smooth(a[i], b[i], γ)
-    end
-end
-
-function smooth_syr!(A::AbstractMatrix, x, γ::Number)
-    for j in 1:size(A, 2), i in 1:j
-        A[i, j] = smooth(A[i,j], x[i] * conj(x[j]), γ)
-    end
-end
 
 abstract type WeightedOnlineStat{T} <: OnlineStat{T} end
 weightsum(o::WeightedOnlineStat) = o.W
