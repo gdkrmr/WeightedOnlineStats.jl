@@ -263,7 +263,7 @@ mutable struct WeightedCovarianceMatrix{T} <: WeightedOnlineStat{VectorOb}
     end
 end
 
-WeightedCovarianceMatrix(C::Matrix{T}, A::Matrix{T}, b::Vector{T}, W::T, W2::T, n::Int) where T = WeightedCovarianceMatrix{T}(C, A, b, W, n)
+WeightedCovarianceMatrix(C::Matrix{T}, A::Matrix{T}, b::Vector{T}, W::T, W2::T, n::Int) where T = WeightedCovarianceMatrix{T}(C, A, b, W, W2, n)
 WeightedCovarianceMatrix(::Type{T}, p::Int=0) where T = WeightedCovarianceMatrix(zeros(T, p, p), zeros(T, p, p), zeros(T, p), T(0), T(0), Int(0))
 WeightedCovarianceMatrix() = WeightedCovarianceMatrix(Float64)
 
@@ -311,6 +311,6 @@ end
 
 mean(o::WeightedCovarianceMatrix) = o.b
 cov(o::WeightedCovarianceMatrix) = value(o)
-Base.copy(o::WeightedCovarianceMatrix) = WeightedCovarianceMatrix(o.C, o.A, o.b, o.W, o.n)
+Base.copy(o::WeightedCovarianceMatrix) = WeightedCovarianceMatrix(o.C, o.A, o.b, o.W, o.W2, o.n)
 
 end # module WeightedOnlineStats
