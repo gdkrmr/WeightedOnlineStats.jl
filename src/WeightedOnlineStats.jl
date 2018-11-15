@@ -5,6 +5,7 @@ export WeightedSum, WeightedMean, WeightedVariance, WeightedCovarianceMatrix
 import OnlineStats: smooth, smooth!, smooth_syr!, Tup, VectorOb, TwoThings
 import OnlineStatsBase: OnlineStat, name, fit!, merge!, _fit!, _merge!, eachrow, eachcol
 import Statistics: mean, var, std
+import StatsBase: cov
 import LinearAlgebra: Hermitian, rmul!
 
 abstract type WeightedOnlineStat{T} <: OnlineStat{T} end
@@ -303,14 +304,27 @@ end
 
 nvars(o::WeightedCovarianceMatrix) = size(o.A, 1)
 
-function value(o::WeightedCovarianceMatrix, corrected::Bool = true)
+function value(o::WeightedCovarianceMatrix)
     o.C[:] = Matrix(Hermitian((o.A - o.b * o.b')))
-    corrected && rmul!(o.C, 1 / (1 - o.W2 / (weightsum(o) ^ 2)))
     o.C
 end
 
 mean(o::WeightedCovarianceMatrix) = o.b
-cov(o::WeightedCovarianceMatrix) = value(o)
+function cov(o::WeightedCovarianceMatrix; corrected = false, weight_type = :analytic)
+    if corrected
+        if weight_type == :analytic
+            rmul!(value(o), 1 / (1 - o.W2 / (weightsum(o) ^ 2)))
+        elseif weight_type == :frequency
+            rmul!(value(o), 1 / (weightsum(o) - 1) * weightsum(o))
+        elseif weight_type == :probability
+            error("If you need this, please make a PR or open an issue")
+        else
+            throw(ArgumentError("weight type $weight_type not implemented"))
+        end
+    else
+        value(o)
+    end
+end
 Base.copy(o::WeightedCovarianceMatrix) = WeightedCovarianceMatrix(o.C, o.A, o.b, o.W, o.W2, o.n)
 
 end # module WeightedOnlineStats
