@@ -5,10 +5,12 @@
 using Test
 using WeightedOnlineStats
 using StatsBase
+import OnlineStatsBase: eachcol, eachrow
 using Statistics
 
 l = 1000
 x = rand(l);
+x2 = rand(l, 5)
 w = rand(l);
 
 @testset "WeightedSum fit!" begin
@@ -157,6 +159,73 @@ end
 
     @test var(rv) ≈ v
     @test var(rv2) ≈ v
+end
+
+@testset "WeightedCovarianceMatrix fit!" begin
+    m, c = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, weights(w), corrected = false)
+    ma, ca = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, aweights(w), corrected = true)
+    mf, cf = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, fweights(w), corrected = true)
+    mp, cp = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, pweights(w), corrected = true)
+
+    o = WeightedCovarianceMatrix()
+    for i in 1:l
+        fit!(o, x2[i,:], w[i])
+    end
+    o
+    mfor, cfor = mean(o), cov(o)
+
+    mval, cval = fit!(WeightedCovarianceMatrix(), x2, w) |> x -> (mean(x), cov(x))
+    mzip, czip = fit!(WeightedCovarianceMatrix(), zip(eachrow(x2), w)) |> x -> (mean(x), cov(x))
+
+    mvala, cvala = fit!(WeightedCovarianceMatrix(), x2, w) |>
+        x -> (mean(x), cov(x, corrected = true, weight_type = :analytic))
+    mvalf, cvalf = fit!(WeightedCovarianceMatrix(), x2, w) |>
+        x -> (mean(x), cov(x, corrected = true, weight_type = :frequency))
+    @test_throws ArgumentError fit!(WeightedCovarianceMatrix(), x2, w) |>
+        x -> (mean(x), cov(x, corrected = true, weight_type = :something))
+
+    @test c ≈ czip
+    @test c ≈ cfor
+    @test c ≈ cval
+    @test m ≈ mzip
+    @test m ≈ mfor
+    @test m ≈ mval
+    @test ca ≈ cvala
+    @test cf ≈ cvalf
+    @test ma ≈ mvala
+    @test mf ≈ mvalf
+
+    # After implementing :probability, these should pass/not throw any more:
+    @test_throws ErrorException mvalp, vvalp = fit!(WeightedCovarianceMatrix(), x2, w) |>
+        x -> (mean(x), cov(x, corrected = true, weight_type = :probability))
+    @test_broken vp ≈ vvalp
+    @test_broken mp ≈ mvalp
+end
+
+@testset "WeightedCovarianceMatrix merge!" begin
+    c = cov(x2, weights(w), corrected = false)
+
+    wc = fit!(WeightedCovarianceMatrix(), x2, w)
+    oc = map(eachrow(x2), w) do xi, wi
+        fit!(WeightedCovarianceMatrix(), xi, wi)
+    end;
+    rc = reduce(merge!, deepcopy(oc))
+    rc2 = merge!(
+        fit!(WeightedCovarianceMatrix(), x2[1:end ÷ 2, :],       w[1:end ÷ 2]),
+        fit!(WeightedCovarianceMatrix(), x2[end ÷ 2 + 1:end, :], w[end ÷ 2 + 1:end]))
+
+    @test rc.b ≈ wc.b
+    @test rc.C ≈ wc.C
+    @test rc.W ≈ wc.W
+    @test rc.W2 ≈ wc.W2
+
+    @test rc2.b ≈ wc.b
+    @test rc2.C ≈ wc.C
+    @test rc2.W ≈ wc.W
+    @test rc2.W2 ≈ wc.W2
+
+    @test cov(rc) ≈ c
+    @test cov(rc2) ≈ c
 end
 
 @testset "Constructors" begin
