@@ -268,7 +268,7 @@ WeightedCovarianceMatrix(::Type{T}, p::Int=0) where T = WeightedCovarianceMatrix
 WeightedCovarianceMatrix() = WeightedCovarianceMatrix(Float64)
 
 function _fit!(o::WeightedCovarianceMatrix{T}, x, w) where T
-    x = convert(T, x)
+    x = convert(Vector{T}, x)
     w = convert(T, w)
 
     o.W += w
