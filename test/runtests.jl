@@ -171,4 +171,8 @@ end
     @test WeightedVariance{Float64}() == WeightedVariance()
     @test WeightedVariance{Float32}() == WeightedVariance(Float32)
     @test WeightedVariance() == WeightedVariance(0.0, 0.0, 0.0, 0.0)
+
+    @test WeightedCovarianceMatrix{Float64}() == WeightedCovarianceMatrix()
+    @test WeightedCovarianceMatrix{Float32}() == WeightedCovarianceMatrix(Float32)
+    @test WeightedCovarianceMatrix() == WeightedCovarianceMatrix(zeros(Float64, 0, 0), zeros(Float64, 0, 0), zeros(Float64, 0), 0.0, 0.0, 0)
 end
