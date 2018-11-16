@@ -14,11 +14,20 @@ using Random
 Random.seed!(123)
 l = 1000
 x = rand(l);
+xmis = convert(Array{Union{Float64, Missing}}, x);
 x2 = rand(l, 5)
+x2mis = convert(Array{Union{Float64, Missing}}, x2)
+x2mis[end, 1] = missing
+x2mis[end - 1, 1] = missing
 w = rand(l);
+wmis = convert(Array{Union{Float64, Missing}}, w);
+wmis[end] = missing
+wmis[end - 2] = missing
 
 Base.isapprox(x::Tuple, y::Tuple) =
     reduce(&, map((a, b) -> a ≈ b, x, y))
+
+missing_to_nan(x::Array{Union{Missing, T}}) where T = map(y -> y === missing ? T(NaN) : y, x)
 
 function test_fit(T::Type{<: WeightedOnlineStats.WeightedOnlineStat{S}},
                   data, weights, unpack_fun, jfun) where S
@@ -47,6 +56,7 @@ end
     test_fit(WeightedSum{Float64}, x, w, sum, (x, w) -> sum(x .* w))
     test_fit(WeightedSum{Float32}, x, w, sum, (x, w) -> sum(x .* w))
 
+    test_fit(WeightedSum{Float64}, xmis, wmis, sum, (x, w) -> sum(skipmissing(x .* w)))
 
     s = sum(broadcast(*, x, w))
 
@@ -105,6 +115,9 @@ end
     test_fit(WeightedMean{Float64}, x, w, mean, (x, w) -> mean(x, weights(w)))
     test_fit(WeightedMean{Float32}, x, w, mean, (x, w) -> mean(x, weights(w)))
 
+    test_fit(WeightedMean{Float64}, xmis, wmis, mean,
+             (x, w) -> sum(skipmissing(x .* w)) / sum(skipmissing(w)))
+
     m = mean(x, weights(w))
 
     mval = mean(fit!(WeightedMean(), x, w))
@@ -161,6 +174,21 @@ end
              x, w,
              x -> (var(x), mean(x)),
              (x, w) -> (var(x, weights(w), corrected = false), mean(x, weights(w))))
+
+    test_fit(WeightedVariance{Float64},
+             xmis, wmis,
+             x -> (var(x, corrected = false), mean(x)),
+             ## I dont know why this version has numerical issues, in my opinion
+             ## this should be the "more" correct one:
+             # (x, w) -> begin x = # missing_to_nan(x[1:end-2])
+             # w = missing_to_nan(w[1:end-2])
+             # (var(x[1:end-2], weights(w[1:end-2]), corrected = false),
+             # mean(x[1:end-2], weights(w[1:end-2]))) end
+             (x, w) -> begin
+             m = sum(skipmissing(x .* w)) / sum(skipmissing(w))
+             v = sum(skipmissing(w .* ((x .- m) .^ 2))) / sum(skipmissing(w))
+             (v, m)
+             end)
 
     m, v = mean(x, weights(w)), var(x, weights(w), corrected = false)
     ma, va = mean(x, weights(w)), var(x, aweights(w), corrected = true)
@@ -286,6 +314,12 @@ end
 
     @test eltype(o) == Float64
     @test eltype(o_32) == Float32
+
+    oold = copy(o)
+    fit!(o, [missing, 1, 2, 3, 4], 1)
+    @test o == oold
+    fit!(o, [1, 2, 3, 4, 5], missing)
+    @test o == oold
 end
 
 @testset "WeightedCovMatrix merge!" begin

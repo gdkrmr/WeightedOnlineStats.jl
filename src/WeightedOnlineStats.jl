@@ -59,20 +59,24 @@ function fit!(o::WeightedOnlineStat{T}, xi::S1, wi::S2) where {T,
     _fit!(o, xi, wi)
     return o
 end
+fit!(o::WeightedOnlineStat, xi::Missing, wi) = o
+fit!(o::WeightedOnlineStat, xi, wi::Missing) = o
 
-function fit!(o::WeightedOnlineStat{VectorOb}, x::VectorOb, w::Number)
+
+# The missing cases in x are dealt with in the dispatch of _fit!
+function fit!(o::WeightedOnlineStat{VectorOb}, x::VectorOb, w::T) where {T <: Number}
     _fit!(o, x, w)
     return o
 end
+fit!(o::WeightedOnlineStat{VectorOb}, xi::VectorOb, wi::Missing) = o
 
-function fit!(o::WeightedOnlineStat{I}, y::T, w::S) where {I, T, S}
-    T == eltype(y) &&
-        error("The input for $(name(o,false,false)) is a $I.  Found $T.")
+function fit!(o::WeightedOnlineStat{I}, y, w::AbstractVector) where I
     for i in 1:length(w)
         fit!(o, y[i], w[i])
     end
     o
 end
+
 
 fit!(o::WeightedOnlineStat{T}, x::TwoThings{R,S}) where {T, R, S} =
     fit!(o, x[1], x[2])
@@ -308,6 +312,28 @@ function _fit!(o::WeightedCovMatrix{T}, x, w) where T
     smooth_syr!(o.A, x, γ)
 end
 
+function _fit!(o::WeightedCovMatrix, x::Vector{Union{T, Missing}}, w) where T
+    if !mapreduce(ismissing, |, x)
+        x = convert(Vector{T}, x)
+        w = convert(T, w)
+
+        o.W += w
+        o.W2 += w * w
+        o.n += 1
+        γ = w / o.W
+        if isempty(o.A)
+            p = length(x)
+            o.b = zeros(T, p)
+            o.A = zeros(T, p, p)
+            o.C = zeros(T, p, p)
+        end
+        smooth!(o.b, x, γ)
+        smooth_syr!(o.A, x, γ)
+    end
+    return o
+end
+_fit!(o::WeightedCovMatrix, x, w::Missing) = o
+
 function _merge!(o::WeightedCovMatrix{T}, o2::WeightedCovMatrix) where T
     o2_A = convert(Matrix{T}, o2.A)
     o2_b = convert(Vector{T}, o2.b)
@@ -373,4 +399,3 @@ Base.copy(o::WeightedCovMatrix) =
     WeightedCovMatrix(o.C, o.A, o.b, o.W, o.W2, o.n)
 
 end # module WeightedOnlineStats
-
