@@ -1,6 +1,6 @@
 module WeightedOnlineStats
 
-export WeightedSum, WeightedMean, WeightedVariance, WeightedCovarianceMatrix
+export WeightedSum, WeightedMean, WeightedVariance, WeightedCovarianceMatrix, WeightedHist, WeightedAdaptiveBins
 
 import OnlineStats: smooth, smooth!, smooth_syr!, Tup, VectorOb, TwoThings
 import OnlineStatsBase: OnlineStat, name, fit!, merge!, _fit!, _merge!, eachrow, eachcol
@@ -326,5 +326,7 @@ function cov(o::WeightedCovarianceMatrix; corrected = false, weight_type = :anal
     end
 end
 Base.copy(o::WeightedCovarianceMatrix) = WeightedCovarianceMatrix(o.C, o.A, o.b, o.W, o.W2, o.n)
+
+include("./histogram.jl")
 
 end # module WeightedOnlineStats
