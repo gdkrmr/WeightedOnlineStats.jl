@@ -9,8 +9,8 @@ WARNING: WORK IN PROGRESS
 # Status
 
 - `WeightedSum`
-  - [ ] `fit!`
-  - [ ] `merge!`
+  - [x] `fit!`
+  - [x] `merge!`
 - `WeightedMean`
   - [x] `fit!`
   - [x] `merge!`
@@ -18,8 +18,8 @@ WARNING: WORK IN PROGRESS
   - [x] `fit!`
   - [x] `merge!`
 - `WeightedCovarianceMatrix`
-  - [ ] `fit!`
-  - [ ] `merge!`
+  - [x] `fit!`
+  - [x] `merge!`
 - `WeightedHistogram`
   - [ ] `fit!`
   - [ ] `merge!`
