@@ -1,6 +1,6 @@
 name = "WeightedOnlineStats"
 uuid = "5434924c-de82-11e8-25f8-6dd717317060"
-authors = ["Guido Kraemer <gdkrmr@users.noreply.github.com>"]
+authors = ["Guido Kraemer <gdkrmr@users.noreply.github.com>", "Martin Gutwin <twinGu@users.noreply.github.com>"]
 version = "0.0.0"
 
 [deps]
