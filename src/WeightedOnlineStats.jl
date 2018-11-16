@@ -1,16 +1,22 @@
 module WeightedOnlineStats
 
-export WeightedSum, WeightedMean, WeightedVariance, WeightedCovarianceMatrix
+export WeightedSum, WeightedMean, WeightedVariance, WeightedCovMatrix,
+    fit!, merge!
 
-import OnlineStats: smooth, smooth!, smooth_syr!, Tup, VectorOb, TwoThings
-import OnlineStatsBase: OnlineStat, name, fit!, merge!, _fit!, _merge!, eachrow, eachcol
-import Statistics: mean, var, std
-import StatsBase: cov
-import LinearAlgebra: Hermitian, rmul!
+import OnlineStats: Tup, VectorOb,
+    TwoThings,
+    smooth, smooth!, smooth_syr!
+import OnlineStatsBase:
+    OnlineStat, name,
+    fit!, merge!,
+    _fit!, _merge!,
+    eachrow, eachcol
+import Statistics: mean, var, std, cov, cor
+import LinearAlgebra: Hermitian, lmul!, rmul!, Diagonal, diag
 
 abstract type WeightedOnlineStat{T} <: OnlineStat{T} end
 weightsum(o::WeightedOnlineStat) = o.W
-
+Base.eltype(o::WeightedOnlineStat{T}) where T = T
 
 ##############################################################
 # Define our own interface so that it accepts two inputs.
@@ -47,22 +53,34 @@ weightsum(o::WeightedOnlineStat) = o.W
 #     end
 #     o
 # end
-fit!(o::WeightedOnlineStat{T}, xi::S1, wi::S2) where {T, S1<:Number, S2<:Number} = (_fit!(o, xi, wi); return o)
-fit!(o::WeightedOnlineStat{VectorOb}, x::VectorOb, w::Number) = (_fit!(o, x, w); return o)
+function fit!(o::WeightedOnlineStat{T}, xi::S1, wi::S2) where {T,
+                                                               S1<:Number,
+                                                               S2<:Number}
+    _fit!(o, xi, wi)
+    return o
+end
+
+function fit!(o::WeightedOnlineStat{VectorOb}, x::VectorOb, w::Number)
+    _fit!(o, x, w)
+    return o
+end
 
 function fit!(o::WeightedOnlineStat{I}, y::T, w::S) where {I, T, S}
-    T == eltype(y) && error("The input for $(name(o,false,false)) is a $I.  Found $T.")
+    T == eltype(y) &&
+        error("The input for $(name(o,false,false)) is a $I.  Found $T.")
     for i in 1:length(w)
         fit!(o, y[i], w[i])
     end
     o
 end
 
-fit!(o::WeightedOnlineStat{T}, x::TwoThings{R,S}) where {T, R, S} = fit!(o, x[1], x[2])
-fit!(o::WeightedOnlineStat{VectorOb}, x::AbstractMatrix, w::AbstractVector) = fit!(o, eachrow(x), w)
+fit!(o::WeightedOnlineStat{T}, x::TwoThings{R,S}) where {T, R, S} =
+    fit!(o, x[1], x[2])
+fit!(o::WeightedOnlineStat{VectorOb}, x::AbstractMatrix, w::AbstractVector) =
+    fit!(o, eachrow(x), w)
 
 function merge!(o::WeightedOnlineStat, o2::WeightedOnlineStat)
-    (weightsum(o) > 0 || weightsum(o) > 0) && _merge!(o, o2)
+    (weightsum(o) > 0 || weightsum(o2) > 0) && _merge!(o, o2)
     o
 end
 function Base.show(io::IO, o::WeightedOnlineStat)
@@ -149,7 +167,8 @@ mutable struct WeightedVariance{T} <: WeightedOnlineStat{T}
     end
 end
 
-WeightedVariance(μ::T, σ2::T, W::T, W2::T) where T = WeightedVariance{T}(μ, σ2, W, W2)
+WeightedVariance(μ::T, σ2::T, W::T, W2::T) where T =
+    WeightedVariance{T}(μ, σ2, W, W2)
 WeightedVariance(::Type{T}) where T = WeightedVariance(T(0), T(0), T(0), T(0))
 WeightedVariance() = WeightedVariance(Float64)
 function _fit!(o::WeightedVariance{T}, x, w) where T
@@ -248,14 +267,14 @@ Base.copy(o::WeightedVariance) = WeightedVariance(o.μ, o.σ2, o.W, o.W2)
 ##############################################################
 # Weighted Covariance Matrix
 ##############################################################
-mutable struct WeightedCovarianceMatrix{T} <: WeightedOnlineStat{VectorOb}
+mutable struct WeightedCovMatrix{T} <: WeightedOnlineStat{VectorOb}
     C::Matrix{T}
     A::Matrix{T}
     b::Vector{T}
     W::T
     W2::T
     n::Int
-    function WeightedCovarianceMatrix{T}(
+    function WeightedCovMatrix{T}(
             C = zeros(T, 0, 0), A = zeros(T, 0, 0),
             b = zeros(T, 0), W = T(0), W2 = T(0),
             n = Int(0)
@@ -264,11 +283,17 @@ mutable struct WeightedCovarianceMatrix{T} <: WeightedOnlineStat{VectorOb}
     end
 end
 
-WeightedCovarianceMatrix(C::Matrix{T}, A::Matrix{T}, b::Vector{T}, W::T, W2::T, n::Int) where T = WeightedCovarianceMatrix{T}(C, A, b, W, W2, n)
-WeightedCovarianceMatrix(::Type{T}, p::Int=0) where T = WeightedCovarianceMatrix(zeros(T, p, p), zeros(T, p, p), zeros(T, p), T(0), T(0), Int(0))
-WeightedCovarianceMatrix() = WeightedCovarianceMatrix(Float64)
+WeightedCovMatrix(C::Matrix{T}, A::Matrix{T}, b::Vector{T},
+                  W::T, W2::T,
+                  n::Int) where T = WeightedCovMatrix{T}(C, A, b, W, W2, n)
+WeightedCovMatrix(::Type{T}, p::Int=0) where T =
+    WeightedCovMatrix(zeros(T, p, p), zeros(T, p, p), zeros(T, p),
+                             T(0), T(0), Int(0))
+WeightedCovMatrix() = WeightedCovMatrix(Float64)
 
-function _fit!(o::WeightedCovarianceMatrix{T}, x, w) where T
+Base.eltype(o::WeightedCovMatrix{T}) where T = T
+
+function _fit!(o::WeightedCovMatrix{T}, x, w) where T
     x = convert(Vector{T}, x)
     w = convert(T, w)
 
@@ -286,31 +311,42 @@ function _fit!(o::WeightedCovarianceMatrix{T}, x, w) where T
     smooth_syr!(o.A, x, γ)
 end
 
-function _merge!(o::WeightedCovarianceMatrix{T}, o2::WeightedCovarianceMatrix) where T
+function _merge!(o::WeightedCovMatrix{T}, o2::WeightedCovMatrix) where T
     o2_A = convert(Matrix{T}, o2.A)
     o2_b = convert(Vector{T}, o2.b)
     o2_W = convert(T, o2.W)
     o2_W2 = convert(T, o2.W2)
 
-    W = o.W + o2_W
-    γ = o2_W / W
-    smooth!(o.A, o2_A, γ)
-    smooth!(o.b, o2_b, γ)
-    o.W = W
-    o.W2 += o2_W2
-    o.n += o2.n
-    o
+    if isempty(o.A)
+        o.C = convert(Matrix{T}, o2.C)
+        o.A = o2_A
+        o.b = o2_b
+        o.W = o2_W
+        o.W2 = o2_W2
+        o.n = o2.n
+    else
+        W = o.W + o2_W
+        γ = o2_W / W
+        smooth!(o.A, o2_A, γ)
+        smooth!(o.b, o2_b, γ)
+        o.W = W
+        o.W2 += o2_W2
+        o.n += o2.n
+    end
+
+    return o
 end
 
-nvars(o::WeightedCovarianceMatrix) = size(o.A, 1)
+nvars(o::WeightedCovMatrix) = size(o.A, 1)
 
-function value(o::WeightedCovarianceMatrix)
+function value(o::WeightedCovMatrix)
     o.C[:] = Matrix(Hermitian((o.A - o.b * o.b')))
     o.C
 end
 
-mean(o::WeightedCovarianceMatrix) = o.b
-function cov(o::WeightedCovarianceMatrix; corrected = false, weight_type = :analytic)
+mean(o::WeightedCovMatrix) = o.b
+function cov(o::WeightedCovMatrix;
+             corrected = false, weight_type = :analytic)
     if corrected
         if weight_type == :analytic
             rmul!(value(o), 1 / (1 - o.W2 / (weightsum(o) ^ 2)))
@@ -325,6 +361,19 @@ function cov(o::WeightedCovarianceMatrix; corrected = false, weight_type = :anal
         value(o)
     end
 end
-Base.copy(o::WeightedCovarianceMatrix) = WeightedCovarianceMatrix(o.C, o.A, o.b, o.W, o.W2, o.n)
+
+function cor(o::WeightedCovMatrix; kw...)
+    cov(o; kw...)
+    v = 1 ./ sqrt.(diag(o.C))
+    rmul!(o.C, Diagonal(v))
+    lmul!(Diagonal(v), o.C)
+    o.C
+end
+
+var(o::WeightedCovMatrix; kw...) = diag(cov(o; kw...))
+
+Base.copy(o::WeightedCovMatrix) =
+    WeightedCovMatrix(o.C, o.A, o.b, o.W, o.W2, o.n)
 
 end # module WeightedOnlineStats
+
