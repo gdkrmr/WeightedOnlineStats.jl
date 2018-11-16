@@ -345,10 +345,12 @@ end
     @test WeightedMean{Float64}() == WeightedMean()
     @test WeightedMean{Float32}() == WeightedMean(Float32)
     @test WeightedMean() == WeightedMean(0.0, 0.0)
+    @test WeightedMean() == WeightedMean{Float64}(0, 0)
 
     @test WeightedVariance{Float64}() == WeightedVariance()
     @test WeightedVariance{Float32}() == WeightedVariance(Float32)
     @test WeightedVariance() == WeightedVariance(0.0, 0.0, 0.0, 0.0)
+    @test WeightedVariance() == WeightedVariance{Float64}(0, 0, 0, 0)
 
     @test WeightedCovMatrix{Float64}() == WeightedCovMatrix()
     @test WeightedCovMatrix{Float32}() == WeightedCovMatrix(Float32)

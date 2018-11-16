@@ -127,7 +127,7 @@ mutable struct WeightedMean{T} <: WeightedOnlineStat{T}
     μ::T
     W::T
     function WeightedMean{T}(μ = T(0), W = T(0)) where T
-        new{T}(μ, W)
+        new{T}(T(μ), T(W))
     end
 end
 
@@ -159,11 +159,8 @@ mutable struct WeightedVariance{T} <: WeightedOnlineStat{T}
     σ2::T
     W::T
     W2::T
-    function WeightedVariance{T}(
-            μ = T(0), σ2 = T(0),
-            W = T(0), W2 = T(0)
-        ) where T
-        new{T}(μ, σ2, W, W2)
+    function WeightedVariance{T}(μ = T(0), σ2 = T(0), W = T(0), W2 = T(0)) where T
+        new{T}(T(μ), T(σ2), T(W), T(W2))
     end
 end
 
