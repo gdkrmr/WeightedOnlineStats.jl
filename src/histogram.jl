@@ -67,7 +67,7 @@ struct WeightedAdaptiveBins{T} <: WeightedHistAlgorithm{T}
         new{T}(value, b, ex, W)
     end
 end
-make_alg(b::Int, T::Type) = WeightedAdaptiveBins{T}(Pair{T, T}[], b, Extrema(T), T(0))
+make_alg(T::Type, b::Int) = WeightedAdaptiveBins{T}(Pair{T, T}[], b, Extrema(T), T(0))
 make_alg(b::Int) = WeightedAdaptiveBins{Float64}(Pair{Float64, Float64}[], b, Extrema(Float64), 0.0)
 midpoints(o::WeightedAdaptiveBins) = first.(o.value)
 counts(o::WeightedAdaptiveBins) = last.(o.value)
@@ -81,7 +81,6 @@ Base.extrema(o::WeightedHist{<:Any, <:WeightedAdaptiveBins}) = extrema(o.alg.ex)
 _fit!(o::WeightedAdaptiveBins, y::Number, w::Number) = _fit!(o, Pair(y, w))
 
 function _fit!(o::WeightedAdaptiveBins{T}, y::Pair) where T
-    # o.W += last(y)
     y = convert(Pair{T, T}, y)
 
     fit!(o.ex, first(y))
