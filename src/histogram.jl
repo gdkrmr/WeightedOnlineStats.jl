@@ -14,11 +14,9 @@ make_alg(o::WeightedHistAlgorithm) = o
 #-----------------------------------------------------------------------# Hist
 struct WeightedHist{N, H <: WeightedHistAlgorithm{N}} <: WeightedOnlineStat{N}
     alg::H
-    W::Number
     WeightedHist{H}(alg::H) where {N, H<:WeightedHistAlgorithm{N}} = new{N, H}(alg)
 end
 WeightedHist(args...; kw...) = (alg = make_alg(args...; kw...); WeightedHist{typeof(alg)}(alg))
-
 for f in [:nobs, :counts, :midpoints, :edges, :area]
     @eval $f(o::WeightedHist) = $f(o.alg)
 end
@@ -60,13 +58,17 @@ function weightsum(o::WeightedHist)
 end
 
 #-----------------------------------------------------------------------# WeightedAdaptiveBins
-struct WeightedAdaptiveBins <: WeightedHistAlgorithm{Number}
-    value::Vector{Pair{Float64, Number}}
+struct WeightedAdaptiveBins{T} <: WeightedHistAlgorithm{T}
+    value::Vector{Pair{T, T}}
     b::Int
-    ex::Extrema{Float64}
+    ex::Extrema{T}
     W::Number
+    function WeightedAdaptiveBins{T}(value = Pair{T, T}[], b = 10, ex = Extrema(T), W = T(0)) where T
+        new{T}(value, b, ex, W)
+    end
 end
-make_alg(b::Int) = WeightedAdaptiveBins(Pair{Float64, Number}[], b, Extrema(Float64), 0.0)
+make_alg(b::Int, T::Type) = WeightedAdaptiveBins{T}(Pair{T, T}[], b, Extrema(T), T(0))
+make_alg(b::Int) = WeightedAdaptiveBins{Float64}(Pair{Float64, Float64}[], b, Extrema(Float64), 0.0)
 midpoints(o::WeightedAdaptiveBins) = first.(o.value)
 counts(o::WeightedAdaptiveBins) = last.(o.value)
 nobs(o::WeightedAdaptiveBins) = isempty(o.value) ? 0 : sum(last, o.value)
@@ -78,8 +80,10 @@ Base.extrema(o::WeightedHist{<:Any, <:WeightedAdaptiveBins}) = extrema(o.alg.ex)
 # Doesn't happen with weighted stats
 _fit!(o::WeightedAdaptiveBins, y::Number, w::Number) = _fit!(o, Pair(y, w))
 
-function _fit!(o::WeightedAdaptiveBins, y::Pair)
+function _fit!(o::WeightedAdaptiveBins{T}, y::Pair) where T
     # o.W += last(y)
+    y = convert(Pair{T, T}, y)
+
     fit!(o.ex, first(y))
     v = o.value
     i = searchsortedfirst(v, y)

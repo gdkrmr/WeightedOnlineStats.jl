@@ -6,6 +6,7 @@ using Test
 using WeightedOnlineStats
 using StatsBase
 import OnlineStatsBase: eachcol, eachrow
+import OnlineStats: Extrema
 using Statistics
 
 l = 1000
@@ -302,4 +303,8 @@ end
     @test WeightedCovarianceMatrix{Float64}() == WeightedCovarianceMatrix()
     @test WeightedCovarianceMatrix{Float32}() == WeightedCovarianceMatrix(Float32)
     @test WeightedCovarianceMatrix() == WeightedCovarianceMatrix(zeros(Float64, 0, 0), zeros(Float64, 0, 0), zeros(Float64, 0), 0.0, 0.0, 0)
+
+    @test WeightedHist{WeightedAdaptiveBins{Float64}}(WeightedAdaptiveBins{Float64}(Pair{Float64, Float64}[], 20, Extrema(Float64), 0.0)) == WeightedHist(20)
+    @test WeightedHist{WeightedAdaptiveBins{Float32}}(WeightedAdaptiveBins{Float32}(Pair{Float32, Float32}[], 20, Extrema(Float32), Float32(0.0))) == WeightedHist(20, Float32)
+    @test WeightedHist(20) == WeightedHist(20, Float64)
 end
