@@ -1,6 +1,8 @@
 module WeightedOnlineStats
 
-export WeightedSum, WeightedMean, WeightedVariance, WeightedCovMatrix,
+export WeightedSum, WeightedMean,
+    WeightedVariance, WeightedCovMatrix,
+    WeightedHist, WeightedAdaptiveBins,
     fit!, merge!
 
 import OnlineStats: Tup, VectorOb,
@@ -397,5 +399,7 @@ var(o::WeightedCovMatrix; kw...) = diag(cov(o; kw...))
 
 Base.copy(o::WeightedCovMatrix) =
     WeightedCovMatrix(o.C, o.A, o.b, o.W, o.W2, o.n)
+
+include("./histogram.jl")
 
 end # module WeightedOnlineStats
