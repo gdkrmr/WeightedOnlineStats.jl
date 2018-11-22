@@ -1,7 +1,3 @@
-import OnlineStats: Algorithm, Extrema, fit!
-import Statistics: median, quantile
-export weightsum, value
-
 ##############################################################
 # Using the code from  OnlineStats.jl/src/stats/hist.jl
 # Modifying it to work with WeightedOnlineStats

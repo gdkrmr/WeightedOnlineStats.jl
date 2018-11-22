@@ -3,17 +3,18 @@ module WeightedOnlineStats
 export WeightedSum, WeightedMean,
     WeightedVariance, WeightedCovMatrix,
     WeightedHist, WeightedAdaptiveBins,
-    fit!, merge!
+    fit!, merge!, weightsum, value
 
 import OnlineStats: Tup, VectorOb,
     TwoThings,
+    Algorithm, Extrema,
     smooth, smooth!, smooth_syr!
 import OnlineStatsBase:
     OnlineStat, name,
     fit!, merge!,
     _fit!, _merge!,
     eachrow, eachcol
-import Statistics: mean, var, std, cov, cor
+import Statistics: mean, var, std, cov, cor, median, quantile
 import LinearAlgebra: Hermitian, lmul!, rmul!, Diagonal, diag
 
 abstract type WeightedOnlineStat{T} <: OnlineStat{T} end
