@@ -60,16 +60,15 @@ struct WeightedAdaptiveBins{T} <: WeightedHistAlgorithm{T}
     value::Vector{Pair{T, T}}
     b::Int
     ex::Extrema{T}
-    W::Number
-    function WeightedAdaptiveBins{T}(value = Pair{T, T}[], b = 10, ex = Extrema(T), W = T(0)) where T
-        new{T}(value, b, ex, W)
+    function WeightedAdaptiveBins{T}(value = Pair{T, T}[], b = 10, ex = Extrema(T)) where T
+        new{T}(value, b, ex)
     end
 end
 
-Base.copy(o::T) where T <: WeightedAdaptiveBins = T(copy(o.value), copy(o.b), copy(o.ex), copy(o.W))
+Base.copy(o::T) where T <: WeightedAdaptiveBins = T(copy(o.value), copy(o.b), copy(o.ex))
 
-make_alg(T::Type, b::Int) = WeightedAdaptiveBins{T}(Pair{T, T}[], b, Extrema(T), T(0))
-make_alg(b::Int) = WeightedAdaptiveBins{Float64}(Pair{Float64, Float64}[], b, Extrema(Float64), 0.0)
+make_alg(T::Type, b::Int) = WeightedAdaptiveBins{T}(Pair{T, T}[], b, Extrema(T))
+make_alg(b::Int) = WeightedAdaptiveBins{Float64}(Pair{Float64, Float64}[], b, Extrema(Float64))
 midpoints(o::WeightedAdaptiveBins) = first.(o.value)
 counts(o::WeightedAdaptiveBins) = last.(o.value)
 nobs(o::WeightedAdaptiveBins) = isempty(o.value) ? 0 : sum(last, o.value)

@@ -437,7 +437,6 @@ end
     @test Ref(o2.alg.value, 1) != Ref(o1.alg.value, 1)
     @test Ref(o2.alg.b)        != Ref(o1.alg.b)
     @test Ref(o2.alg.ex)       != Ref(o1.alg.ex)
-    @test Ref(o2.alg.W)        != Ref(o1.alg.W)
 end
 
 @testset "Constructors" begin
@@ -464,12 +463,12 @@ end
 
     @test WeightedHist{WeightedAdaptiveBins{Float64}}(
         WeightedAdaptiveBins{Float64}(
-            Pair{Float64, Float64}[], 20, Extrema(Float64), 0.0
+            Pair{Float64, Float64}[], 20, Extrema(Float64)
         )
     ) == WeightedHist(20)
     @test WeightedHist{WeightedAdaptiveBins{Float32}}(
         WeightedAdaptiveBins{Float32}(
-            Pair{Float32, Float32}[], 20, Extrema(Float32), Float32(0.0)
+            Pair{Float32, Float32}[], 20, Extrema(Float32)
         )
     ) == WeightedHist(Float32, 20)
     @test WeightedHist(20) == WeightedHist(Float64, 20)
