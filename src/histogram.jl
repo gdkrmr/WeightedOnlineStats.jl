@@ -81,16 +81,16 @@ Base.extrema(o::WeightedHist{<:Any, <:WeightedAdaptiveBins}) = extrema(o.alg.ex)
 _fit!(o::WeightedAdaptiveBins, y::Number, w::Number) = _fit!(o, Pair(y, w))
 
 function _fit!(o::WeightedAdaptiveBins{T}, y::Pair) where T
-    y = convert(Pair{T, T}, y)
+    y2 = convert(Pair{T, T}, y)
 
-    fit!(o.ex, first(y))
+    fit!(o.ex, first(y2))
     v = o.value
-    i = searchsortedfirst(v, y)
-    insert!(v, i, y)
+    i = searchsortedfirst(v, y2)
+    insert!(v, i, y2)
     if length(v) > o.b
         # find minimum difference
         i = 0
-        mindiff = Inf
+        mindiff = T(Inf)
         for k in 1:(length(v) - 1)
             @inbounds diff = first(v[k + 1]) - first(v[k])
             if diff < mindiff

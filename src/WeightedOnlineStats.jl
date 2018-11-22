@@ -142,9 +142,9 @@ WeightedMean(μ::T, W::T) where T = WeightedMean{T}(μ, W)
 WeightedMean(::Type{T}) where T = WeightedMean(T(0), T(0))
 WeightedMean() = WeightedMean(Float64)
 function _fit!(o::WeightedMean{T}, x, w) where T
-    w = convert(T, w)
-    o.W += w
-    o.μ = smooth(o.μ, x, w / o.W)
+    w2 = convert(T, w)
+    o.W += w2
+    o.μ = smooth(o.μ, x, w2 / o.W)
     o
 end
 
@@ -176,17 +176,17 @@ WeightedVariance(μ::T, σ2::T, W::T, W2::T) where T =
 WeightedVariance(::Type{T}) where T = WeightedVariance(T(0), T(0), T(0), T(0))
 WeightedVariance() = WeightedVariance(Float64)
 function _fit!(o::WeightedVariance{T}, x, w) where T
-    x = convert(T, x)
-    w = convert(T, w)
+    xx = convert(T, x)
+    ww = convert(T, w)
 
-    o.W += w
-    o.W2 += w * w
-    γ = w / o.W
+    o.W += ww
+    o.W2 += ww * ww
+    γ = ww / o.W
     μ = o.μ
 
-    o.μ = smooth(o.μ, x, γ)
-    # o.S += w * (x - μ) * (x - o.μ)
-    o.σ2 = smooth(o.σ2, (x - o.μ) * (x - μ), γ)
+    o.μ = smooth(o.μ, xx, γ)
+    # o.S += ww * (xx - μ) * (xx - o.μ)
+    o.σ2 = smooth(o.σ2, (xx - o.μ) * (xx - μ), γ)
 
     return o
 end
@@ -298,21 +298,21 @@ WeightedCovMatrix() = WeightedCovMatrix(Float64)
 Base.eltype(o::WeightedCovMatrix{T}) where T = T
 
 function _fit!(o::WeightedCovMatrix{T}, x, w) where T
-    x = convert(Vector{T}, x)
-    w = convert(T, w)
+    xx = convert(Vector{T}, x)
+    ww = convert(T, w)
 
-    o.W += w
-    o.W2 += w * w
+    o.W += ww
+    o.W2 += ww * ww
     o.n += 1
-    γ = w / o.W
+    γ = ww / o.W
     if isempty(o.A)
-        p = length(x)
+        p = length(xx)
         o.b = zeros(T, p)
         o.A = zeros(T, p, p)
         o.C = zeros(T, p, p)
     end
-    smooth!(o.b, x, γ)
-    smooth_syr!(o.A, x, γ)
+    smooth!(o.b, xx, γ)
+    smooth_syr!(o.A, xx, γ)
 end
 
 function _fit!(o::WeightedCovMatrix, x::Vector{Union{T, Missing}}, w) where T
