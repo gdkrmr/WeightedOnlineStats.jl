@@ -430,6 +430,16 @@ end
     @test (h, ws) == (rh2, rws2)
 end
 
+@testset "WeightedHist copy" begin
+    o1 = WeightedHist(20)
+    o2 = copy(o1)
+
+    @test Ref(o2.alg.value, 1) != Ref(o1.alg.value, 1)
+    @test Ref(o2.alg.b)        != Ref(o1.alg.b)
+    @test Ref(o2.alg.ex)       != Ref(o1.alg.ex)
+    @test Ref(o2.alg.W)        != Ref(o1.alg.W)
+end
+
 @testset "Constructors" begin
     @test WeightedSum{Float64}() == WeightedSum()
     @test WeightedSum{Float32}() == WeightedSum(Float32)
