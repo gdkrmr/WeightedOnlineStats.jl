@@ -12,6 +12,7 @@ WeightedVariance(μ::T, σ2::T, W::T, W2::T) where T =
     WeightedVariance{T}(μ, σ2, W, W2)
 WeightedVariance(::Type{T}) where T = WeightedVariance(T(0), T(0), T(0), T(0))
 WeightedVariance() = WeightedVariance(Float64)
+
 function _fit!(o::WeightedVariance{T}, x, w) where T
     xx = convert(T, x)
     ww = convert(T, w)
@@ -22,17 +23,11 @@ function _fit!(o::WeightedVariance{T}, x, w) where T
     μ = o.μ
 
     o.μ = smooth(o.μ, xx, γ)
-    # o.S += ww * (xx - μ) * (xx - o.μ)
     o.σ2 = smooth(o.σ2, (xx - o.μ) * (xx - μ), γ)
 
     return o
 end
-# function _fit!(o::Variance, x)
-#     μ = o.μ
-#     γ = o.weight(o.n += 1)
-#     o.μ = smooth(o.μ, x, γ)
-#     o.σ2 = smooth(o.σ2, (x - o.μ) * (x - μ), γ)
-# end
+
 function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
 
     o2_μ = convert(T, o2.μ)
@@ -74,25 +69,15 @@ function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
 
     return o
 end
-# function _merge!(o::Variance, o2::Variance)
-#     γ = o2.n / (o.n += o2.n)
-#     δ = o2.μ - o.μ
-#     o.σ2 = smooth(o.σ2, o2.σ2, γ) + δ ^ 2 * γ * (1.0 - γ)
-#     o.μ = smooth(o.μ, o2.μ, γ)
-#     o
-# end
+
 value(o::WeightedVariance) = o.σ2
 mean(o::WeightedVariance) = o.μ
 function var(o::WeightedVariance; corrected = false, weight_type = :analytic)
     if corrected
         if weight_type == :analytic
-            # o.S / (weightsum(o) - o.W2 / weightsum(o))
-            # o.S / ((weightsum(o) ^ 2) - o.W2)
-            # o.S / (weightsum(o) - o.W2 / weightsum(o)) * weightsum(o)
             value(o) / (1 - o.W2 / (weightsum(o) ^ 2))
         elseif weight_type == :frequency
             value(o) / (weightsum(o) - 1) * weightsum(o)
-            # o.S / (weightsum(o) - 1) * (weightsum(o) ^ 2)
         elseif weight_type == :probability
             error("If you need this, please make a PR or open an issue")
         else
@@ -102,5 +87,5 @@ function var(o::WeightedVariance; corrected = false, weight_type = :analytic)
         value(o)
     end
 end
-std(o::WeightedOnlineStat; kw...) = sqrt.(var(o; kw...))
+std(o::WeightedVariance; kw...) = sqrt.(var(o; kw...))
 Base.copy(o::WeightedVariance) = WeightedVariance(o.μ, o.σ2, o.W, o.W2)

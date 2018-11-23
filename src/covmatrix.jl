@@ -22,8 +22,6 @@ WeightedCovMatrix(::Type{T}, p::Int=0) where T =
                              T(0), T(0), Int(0))
 WeightedCovMatrix() = WeightedCovMatrix(Float64)
 
-Base.eltype(o::WeightedCovMatrix{T}) where T = T
-
 function _fit!(o::WeightedCovMatrix{T}, x, w) where T
     xx = convert(Vector{T}, x)
     ww = convert(T, w)
@@ -42,23 +40,10 @@ function _fit!(o::WeightedCovMatrix{T}, x, w) where T
     smooth_syr!(o.A, xx, γ)
 end
 
-function _fit!(o::WeightedCovMatrix, x::Vector{Union{T, Missing}}, w) where T
+function _fit!(o::WeightedCovMatrix{T1}, x::Vector{Union{T2, Missing}}, w) where {T1, T2}
     if !mapreduce(ismissing, |, x)
-        x = convert(Vector{T}, x)
-        w = convert(T, w)
-
-        o.W += w
-        o.W2 += w * w
-        o.n += 1
-        γ = w / o.W
-        if isempty(o.A)
-            p = length(x)
-            o.b = zeros(T, p)
-            o.A = zeros(T, p, p)
-            o.C = zeros(T, p, p)
-        end
-        smooth!(o.b, x, γ)
-        smooth_syr!(o.A, x, γ)
+        xx = convert(Vector{T1}, x)
+        _fit!(o, xx, w)
     end
     return o
 end
@@ -97,9 +82,7 @@ function value(o::WeightedCovMatrix)
     o.C
 end
 
-mean(o::WeightedCovMatrix) = o.b
-function cov(o::WeightedCovMatrix;
-             corrected = false, weight_type = :analytic)
+function cov(o::WeightedCovMatrix; corrected = false, weight_type = :analytic)
     if corrected
         if weight_type == :analytic
             rmul!(value(o), 1 / (1 - o.W2 / (weightsum(o) ^ 2)))
@@ -123,7 +106,10 @@ function cor(o::WeightedCovMatrix; kw...)
     o.C
 end
 
+mean(o::WeightedCovMatrix) = o.b
 var(o::WeightedCovMatrix; kw...) = diag(cov(o; kw...))
+std(o::WeightedCovMatrix; kw...) = sqrt.(var(o; kw...))
 
+Base.eltype(o::WeightedCovMatrix{T}) where T = T
 Base.copy(o::WeightedCovMatrix) =
     WeightedCovMatrix(o.C, o.A, o.b, o.W, o.W2, o.n)
