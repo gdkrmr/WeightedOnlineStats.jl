@@ -120,12 +120,17 @@ end
              (x, w) -> sum(skipmissing(x .* w)) / sum(skipmissing(w)))
 
     m = mean(x, weights(w))
+    s = sum(broadcast(*, w, x))
 
     mval = mean(fit!(WeightedMean(), x, w))
     mzip = mean(fit!(WeightedMean(), zip(x, w)))
+    sval = sum(fit!(WeightedMean(), x, w))
+    szip = sum(fit!(WeightedMean(), zip(x, w)))
 
     @test m ≈ mzip
     @test m ≈ mval
+    @test s ≈ szip
+    @test s ≈ sval
 
     m2val = mean(fit!(WeightedMean(Float32), x, w))
     m2zip = mean(fit!(WeightedMean(Float32), zip(x, w)))
