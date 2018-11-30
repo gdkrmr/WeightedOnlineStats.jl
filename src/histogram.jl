@@ -8,6 +8,22 @@ Base.show(io::IO, o::WeightedHistAlgorithm) = print(io, name(o, false, false))
 make_alg(o::WeightedHistAlgorithm) = o
 
 #-----------------------------------------------------------------------# Hist
+"""
+Weighted Historgram
+
+Calculate a histogram of weighted data.
+
+# Example
+    # A weighted histogram with 4 bins:
+    o = fit!(WeightedHist(4), rand(1000), rand(1000))
+
+    mean(o)
+    var(o)
+    std(o)
+    median(o)
+    quantile(o, [0, 0.25, 0.5, 0.25, 1.0])
+    extrema(o)
+"""
 struct WeightedHist{N, H <: WeightedHistAlgorithm{N}} <: WeightedOnlineStat{N}
     alg::H
     WeightedHist{H}(alg::H) where {N, H<:WeightedHistAlgorithm{N}} = new{N, H}(alg)

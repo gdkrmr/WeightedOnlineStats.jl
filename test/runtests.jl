@@ -196,20 +196,20 @@ end
              (v, m)
              end)
 
-    m, v = mean(x, weights(w)), var(x, weights(w), corrected = false)
-    ma, va = mean(x, weights(w)), var(x, aweights(w), corrected = true)
-    mf, vf = mean(x, weights(w)), var(x, fweights(w), corrected = true)
-    mp, vp = mean(x, weights(w)), var(x, pweights(w), corrected = true)
+    s, m, v = sum(x .* w), mean(x, weights(w)), var(x, weights(w), corrected = false)
+    sa, ma, va = sum(x .* w), mean(x, weights(w)), var(x, aweights(w), corrected = true)
+    sf, mf, vf = sum(x .* w), mean(x, weights(w)), var(x, fweights(w), corrected = true)
+    sp, mp, vp = sum(x .* w), mean(x, weights(w)), var(x, pweights(w), corrected = true)
 
-    mval, vval = fit!(WeightedVariance(), x, w) |> x -> (mean(x), var(x))
-    mzip, vzip = fit!(WeightedVariance(), zip(x, w)) |> x -> (mean(x), var(x))
+    sval, mval, vval = fit!(WeightedVariance(), x, w)      |> x -> (sum(x), mean(x), var(x))
+    szip, mzip, vzip = fit!(WeightedVariance(), zip(x, w)) |> x -> (sum(x), mean(x), var(x))
 
-    mvala, vvala = fit!(WeightedVariance(), x, w) |>
-        x -> (mean(x), var(x, corrected = true, weight_type = :analytic))
-    mvalf, vvalf = fit!(WeightedVariance(), x, w) |>
-        x -> (mean(x), var(x, corrected = true, weight_type = :frequency))
+    svala, mvala, vvala = fit!(WeightedVariance(), x, w) |>
+        x -> (sum(x), mean(x), var(x, corrected = true, weight_type = :analytic))
+    svalf, mvalf, vvalf = fit!(WeightedVariance(), x, w) |>
+        x -> (sum(x), mean(x), var(x, corrected = true, weight_type = :frequency))
     @test_throws ArgumentError fit!(WeightedVariance(), x, w) |>
-        x -> (mean(x), var(x, corrected = true, weight_type = :something))
+        x -> (sum(x), mean(x), var(x, corrected = true, weight_type = :something))
 
     @test v ≈ vzip
     @test v ≈ vval
@@ -219,6 +219,11 @@ end
     @test vf ≈ vvalf
     @test ma ≈ mvala
     @test mf ≈ mvalf
+
+    @test s ≈ sval
+    @test s ≈ szip
+    @test s ≈ svala
+    @test s ≈ svalf
 
     # After implementing :probability, these should pass/not throw any more:
     @test_throws ErrorException mvalp, vvalp = fit!(WeightedVariance(), x, w) |>
@@ -270,7 +275,9 @@ end
 end
 
 @testset "WeightedCovMatrix fit!" begin
-    m, c = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, weights(w), corrected = false)
+    s, m, c = (map(x -> sum(x .* w), eachcol(x2)),
+               map(x -> mean(x, weights(w)), eachcol(x2)),
+               cov(x2, weights(w), corrected = false))
     ma, ca = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, aweights(w), corrected = true)
     mf, cf = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, fweights(w), corrected = true)
     mp, cp = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, pweights(w), corrected = true)
@@ -280,17 +287,17 @@ end
         fit!(o, x2[i,:], w[i])
     end
     o
-    mfor, cfor = mean(o), cov(o)
+    sfor, mfor, cfor = sum(o), mean(o), cov(o)
 
     o_32 = WeightedCovMatrix(Float32)
     for i in 1:l
         fit!(o_32, x2[i,:], w[i])
     end
     o_32
-    mfor_32, cfor_32 = mean(o_32), cov(o_32)
+    sfor_32, mfor_32, cfor_32 = sum(o_32), mean(o_32), cov(o_32)
 
-    mval, cval = fit!(WeightedCovMatrix(), x2, w) |> x -> (mean(x), cov(x))
-    mzip, czip = fit!(WeightedCovMatrix(), zip(eachrow(x2), w)) |> x -> (mean(x), cov(x))
+    sval, mval, cval = fit!(WeightedCovMatrix(), x2, w) |> x -> (sum(x), mean(x), cov(x))
+    szip, mzip, czip = fit!(WeightedCovMatrix(), zip(eachrow(x2), w)) |> x -> (sum(x), mean(x), cov(x))
 
     mvala, cvala = fit!(WeightedCovMatrix(), x2, w) |>
         x -> (mean(x), cov(x, corrected = true, weight_type = :analytic))
@@ -311,6 +318,11 @@ end
     @test cf ≈ cvalf
     @test ma ≈ mvala
     @test mf ≈ mvalf
+
+    @test s ≈ sfor
+    @test s ≈ sfor_32
+    @test s ≈ sval
+    @test s ≈ szip
 
     # After implementing :probability, these should pass/not throw any more:
     @test_throws ErrorException mvalp, vvalp = fit!(WeightedCovMatrix(), x2, w) |>
@@ -464,7 +476,7 @@ end
     @test WeightedCovMatrix() == WeightedCovMatrix(zeros(Float64, 0, 0),
                                                    zeros(Float64, 0, 0),
                                                    zeros(Float64, 0),
-                                                   0.0, 0.0, 0)
+                                                   0.0, 0.0)
 
     @test WeightedHist{WeightedAdaptiveBins{Float64}}(
         WeightedAdaptiveBins{Float64}(

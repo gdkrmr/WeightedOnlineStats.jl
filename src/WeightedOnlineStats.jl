@@ -3,7 +3,8 @@ module WeightedOnlineStats
 export WeightedSum, WeightedMean,
     WeightedVariance, WeightedCovMatrix,
     WeightedHist, WeightedAdaptiveBins,
-    fit!, merge!, weightsum, value
+    fit!, merge!, weightsum, value,
+    mean, std, cov, cor, median, quantile
 
 import OnlineStats: Tup, VectorOb,
     TwoThings,

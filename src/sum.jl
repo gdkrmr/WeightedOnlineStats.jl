@@ -1,3 +1,12 @@
+"""
+WeightedSum(T = Float64)
+
+Simple weighted sum, tracked as type `T`.
+
+# Example:
+    o = fit!(WeightedSum(), rand(100), rand(100))
+    sum(o)
+"""
 mutable struct WeightedSum{T} <: WeightedOnlineStat{T}
     ∑::T
     W::T

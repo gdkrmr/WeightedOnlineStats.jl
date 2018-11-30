@@ -1,25 +1,36 @@
+"""
+WeightedCovMatrix(T = Float64)
+
+Weighted covariance matrix, tracked as a matrix of type `T`.
+
+# Example:
+    o = fit!(WeightedCovMatrix(), rand(100, 4), rand(100))
+    sum(o)
+    mean(o)
+    var(o)
+    std(o)
+    cov(o)
+    cor(o)
+"""
 mutable struct WeightedCovMatrix{T} <: WeightedOnlineStat{VectorOb}
     C::Matrix{T}
     A::Matrix{T}
     b::Vector{T}
     W::T
     W2::T
-    n::Int
     function WeightedCovMatrix{T}(
             C = zeros(T, 0, 0), A = zeros(T, 0, 0),
-            b = zeros(T, 0), W = T(0), W2 = T(0),
-            n = Int(0)
-        ) where T
-        new{T}(C, A, b, W, W2, n)
+            b = zeros(T, 0), W = T(0), W2 = T(0)) where T
+        new{T}(C, A, b, W, W2)
     end
 end
 
-WeightedCovMatrix(C::Matrix{T}, A::Matrix{T}, b::Vector{T},
-                  W::T, W2::T,
-                  n::Int) where T = WeightedCovMatrix{T}(C, A, b, W, W2, n)
+WeightedCovMatrix(
+        C::Matrix{T}, A::Matrix{T}, b::Vector{T}, W::T, W2::T
+    ) where T =
+    WeightedCovMatrix{T}(C, A, b, W, W2)
 WeightedCovMatrix(::Type{T}, p::Int=0) where T =
-    WeightedCovMatrix(zeros(T, p, p), zeros(T, p, p), zeros(T, p),
-                             T(0), T(0), Int(0))
+    WeightedCovMatrix(zeros(T, p, p), zeros(T, p, p), zeros(T, p), T(0), T(0))
 WeightedCovMatrix() = WeightedCovMatrix(Float64)
 
 function _fit!(o::WeightedCovMatrix{T}, x, w) where T
@@ -28,7 +39,6 @@ function _fit!(o::WeightedCovMatrix{T}, x, w) where T
 
     o.W += ww
     o.W2 += ww * ww
-    o.n += 1
     γ = ww / o.W
     if isempty(o.A)
         p = length(xx)
@@ -61,7 +71,6 @@ function _merge!(o::WeightedCovMatrix{T}, o2::WeightedCovMatrix) where T
         o.b = o2_b
         o.W = o2_W
         o.W2 = o2_W2
-        o.n = o2.n
     else
         W = o.W + o2_W
         γ = o2_W / W
@@ -69,7 +78,6 @@ function _merge!(o::WeightedCovMatrix{T}, o2::WeightedCovMatrix) where T
         smooth!(o.b, o2_b, γ)
         o.W = W
         o.W2 += o2_W2
-        o.n += o2.n
     end
 
     return o
@@ -106,10 +114,11 @@ function cor(o::WeightedCovMatrix; kw...)
     o.C
 end
 
+Base.sum(o::WeightedCovMatrix) = o.b .* o.W
 mean(o::WeightedCovMatrix) = o.b
 var(o::WeightedCovMatrix; kw...) = diag(cov(o; kw...))
 std(o::WeightedCovMatrix; kw...) = sqrt.(var(o; kw...))
 
 Base.eltype(o::WeightedCovMatrix{T}) where T = T
 Base.copy(o::WeightedCovMatrix) =
-    WeightedCovMatrix(o.C, o.A, o.b, o.W, o.W2, o.n)
+    WeightedCovMatrix(o.C, o.A, o.b, o.W, o.W2)

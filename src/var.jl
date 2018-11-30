@@ -1,3 +1,15 @@
+"""
+WeightedVariance(T = Float64)
+
+Simple weighted variance, tracked as type `T`.
+
+# Example:
+    o = fit!(WeightedVariance(), rand(100), rand(100))
+    sum(o)
+    mean(o)
+    var(o)
+    std(o)
+"""
 mutable struct WeightedVariance{T} <: WeightedOnlineStat{T}
     μ::T
     σ2::T
@@ -71,6 +83,7 @@ function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
 end
 
 value(o::WeightedVariance) = o.σ2
+Base.sum(o::WeightedVariance) = o.μ * o.W
 mean(o::WeightedVariance) = o.μ
 function var(o::WeightedVariance; corrected = false, weight_type = :analytic)
     if corrected

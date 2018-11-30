@@ -1,3 +1,13 @@
+"""
+WeightedMean(T = Float64)
+
+Simple weighted mean, tracked as type `T`.
+
+# Example:
+    o = fit!(WeightedMean(), rand(100), rand(100))
+    sum(o)
+    mean(o)
+"""
 mutable struct WeightedMean{T} <: WeightedOnlineStat{T}
     μ::T
     W::T
