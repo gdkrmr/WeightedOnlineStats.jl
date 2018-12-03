@@ -36,4 +36,4 @@ mean(o3)
 - `WeightedMean`
 - `WeightedVariance`
 - `WeightedCovMatrix`
-- `WeightedHistogram`
+- `WeightedHist`
