@@ -15,23 +15,25 @@ mutable struct WeightedVariance{T} <: WeightedOnlineStat{T}
     σ2::T
     W::T
     W2::T
-    function WeightedVariance{T}(μ = T(0), σ2 = T(0), W = T(0), W2 = T(0)) where T
-        new{T}(T(μ), T(σ2), T(W), T(W2))
+    n::Int
+    function WeightedVariance{T}(μ = T(0), σ2 = T(0), W = T(0), W2 = T(0), n = 0) where T
+        new{T}(T(μ), T(σ2), T(W), T(W2), Int(n))
     end
 end
 
-WeightedVariance(μ::T, σ2::T, W::T, W2::T) where T =
-    WeightedVariance{T}(μ, σ2, W, W2)
-WeightedVariance(::Type{T}) where T = WeightedVariance(T(0), T(0), T(0), T(0))
+WeightedVariance(μ::T, σ2::T, W::T, W2::T, n::Int) where T =
+    WeightedVariance{T}(μ, σ2, W, W2, n)
+WeightedVariance(::Type{T}) where T = WeightedVariance(T(0), T(0), T(0), T(0), 0)
 WeightedVariance() = WeightedVariance(Float64)
 
 function _fit!(o::WeightedVariance{T}, x, w) where T
     xx = convert(T, x)
     ww = convert(T, w)
 
-    o.W += ww
-    o.W2 += ww * ww
-    γ = ww / o.W
+    o.n += 1
+    o.W = smooth(o.W, ww, 1 / o.n)
+    o.W2 = smooth(o.W2, ww*ww, 1 / o.n)
+    γ = ww / (o.W * o.n)
     μ = o.μ
 
     o.μ = smooth(o.μ, xx, γ)
@@ -47,9 +49,10 @@ function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
     o2_W = convert(T, o2.W)
     o2_W2 = convert(T, o2.W2)
 
-    W = o.W + o2_W
-    γ1 = o.W / W
-    γ2 = o2_W / W
+    W = smooth(o.W, o2_W, o2.n / o.n)
+    n = o.n + o2.n
+    γ1 = (o.W * o.n) / (W * n)
+    γ2 = (o2_W * o2.n) / (W * n)
 
     μ = smooth(o.μ, o2_μ, γ2)
 
@@ -63,7 +66,8 @@ function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
 
     o.μ = μ
     o.W = W
-    o.W2 += o2_W2
+    o.W2 = smooth(o.W2, o2_W2, o2.n / o.n)
+    o.n = n
 
     ###########################################
 
@@ -83,12 +87,12 @@ function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
 end
 
 value(o::WeightedVariance) = o.σ2
-Base.sum(o::WeightedVariance) = o.μ * o.W
+Base.sum(o::WeightedVariance) = mean(o) * meanweight(o) * nobs(o)
 mean(o::WeightedVariance) = o.μ
 function var(o::WeightedVariance; corrected = false, weight_type = :analytic)
     if corrected
         if weight_type == :analytic
-            value(o) / (1 - o.W2 / (weightsum(o) ^ 2))
+            value(o) / (1 - (o.W2*nobs(o)) / (weightsum(o) ^ 2))
         elseif weight_type == :frequency
             value(o) / (weightsum(o) - 1) * weightsum(o)
         elseif weight_type == :probability
