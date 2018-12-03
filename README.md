@@ -30,10 +30,10 @@ mean(o3)
 
 # Statistics
 
-`WeightedOnlineStats.jl` currently implements the following algorithms:
+`WeightedOnlineStats.jl` currently implements the following Statistics:
 
-- WeightedSum
-- WeightedMean
-- WeightedVariance
-- WeightedCovarianceMatrix
-- WeightedHistogram
+- `WeightedSum`
+- `WeightedMean`
+- `WeightedVariance`
+- `WeightedCovarianceMatrix`
+- `WeightedHistogram`

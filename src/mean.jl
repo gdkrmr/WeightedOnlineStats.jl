@@ -21,8 +21,8 @@ WeightedMean(::Type{T}) where T = WeightedMean(T(0), T(0))
 WeightedMean() = WeightedMean(Float64)
 
 function _fit!(o::WeightedMean{T}, x, w) where T
-    ww = convert(T, w)
     xx = convert(T, x)
+    ww = convert(T, w)
 
     o.W += ww
     o.μ = smooth(o.μ, xx, ww / o.W)
