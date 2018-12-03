@@ -14,7 +14,8 @@ import OnlineStatsBase:
     OnlineStat, name,
     fit!, merge!,
     _fit!, _merge!,
-    eachrow, eachcol
+    eachrow, eachcol,
+    nobs
 import Statistics: mean, var, std, cov, cor, median, quantile
 import LinearAlgebra: Hermitian, lmul!, rmul!, Diagonal, diag
 

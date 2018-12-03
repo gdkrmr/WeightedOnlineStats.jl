@@ -1,5 +1,6 @@
 abstract type WeightedOnlineStat{T} <: OnlineStat{T} end
-weightsum(o::WeightedOnlineStat) = o.W
+meanweight(o::WeightedOnlineStat) = o.W
+weightsum(o::WeightedOnlineStat) = meanweight(o) * nobs(o)
 Base.eltype(o::WeightedOnlineStat{T}) where T = T
 
 ##############################################################
