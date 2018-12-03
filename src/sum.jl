@@ -10,26 +10,29 @@ Simple weighted sum, tracked as type `T`.
 mutable struct WeightedSum{T} <: WeightedOnlineStat{T}
     ∑::T
     W::T
-    function WeightedSum{T}(∑ = T(0), W = T(0)) where T
-        new{T}(∑, W)
+    n::Int
+    function WeightedSum{T}(∑ = T(0), W = T(0), n = 0) where T
+        new{T}(T(∑), T(W), Int(n))
     end
 end
 
-WeightedSum(∑::T, W::T) where T = WeightedSum{T}(∑, W)
-WeightedSum(::Type{T}) where T = WeightedSum(T(0), T(0))
+WeightedSum(∑::T, W::T, n::Int) where T = WeightedSum{T}(∑, W, n)
+WeightedSum(::Type{T}) where T = WeightedSum(T(0), T(0), 0)
 WeightedSum() = WeightedSum(Float64)
 
 function _fit!(o::WeightedSum{T}, x, w) where T
     ww = convert(T, w)
     xx = convert(T, x)
 
-    o.W += ww
+    o.n += 1
+    o.W += smooth(o.W, ww, 1 / o.n)
     o.∑ += xx * ww
     o
 end
 
 function _merge!(o::WeightedSum{T}, o2::WeightedSum) where T
-    o.W += convert(T, o2.W)
+    o.n += o2.n
+    o.W = smooth(o.W, convert(T, o2.W), o2.n / o.n)
     o.∑ += convert(T, o2.∑)
     o
 end

@@ -143,6 +143,7 @@ end
 
 @testset "WeighedMean merge!" begin
     m = mean(x, weights(w))
+    wm = fit!(WeightedMean(), x, w) |> mean
 
     om = map(x, w) do xi, wi
         fit!(WeightedMean(), xi, wi)
@@ -161,6 +162,7 @@ end
     ) |> mean
 
     @test rm ≈ m
+    @test rm ≈ wm
     @test rm2 ≈ m
     @test rm_32 ≈ m
     @test rm2_32 ≈ m

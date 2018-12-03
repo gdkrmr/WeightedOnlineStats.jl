@@ -49,8 +49,9 @@ function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
     o2_W = convert(T, o2.W)
     o2_W2 = convert(T, o2.W2)
 
-    W = smooth(o.W, o2_W, o2.n / o.n)
+
     n = o.n + o2.n
+    W = smooth(o.W, o2_W, o2.n / n)
     γ1 = (o.W * o.n) / (W * n)
     γ2 = (o2_W * o2.n) / (W * n)
 
@@ -64,10 +65,11 @@ function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
         γ1 * ( o.σ2  + (o.μ - μ) ^ 2) +
         γ2 * (o2_σ2 + (o2_μ - μ) ^ 2)
 
+    o.n = n
     o.μ = μ
     o.W = W
     o.W2 = smooth(o.W2, o2_W2, o2.n / o.n)
-    o.n = n
+
 
     ###########################################
 
