@@ -128,4 +128,5 @@ std(o::WeightedCovMatrix; kw...) = sqrt.(var(o; kw...))
 
 Base.eltype(o::WeightedCovMatrix{T}) where T = T
 Base.copy(o::WeightedCovMatrix) =
-    WeightedCovMatrix(o.C, o.A, o.b, o.W, o.W2, o.n)
+    WeightedCovMatrix(copy(o.C), copy(o.A), copy(o.b),
+                      o.W, o.W2, o.n)
