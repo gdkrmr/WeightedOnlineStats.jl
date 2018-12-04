@@ -123,3 +123,21 @@ ll. 151-161
   samples:          10000
   evals/sample:     6
 =#
+
+using Traceur
+
+x = rand(100)
+x2 = rand(100, 2)
+w = rand(100)
+
+@trace fit!(WeightedSum(), x, w)
+@trace fit!(WeightedSum(Float32), x, w)
+
+@trace fit!(WeightedMean(), x, w)
+@trace fit!(WeightedMean(Float32), x, w)
+
+@trace fit!(WeightedVariance(), x, w)
+@trace fit!(WeightedVariance(Float32), x, w)
+
+@trace fit!(WeightedCovMatrix(), x2, w)
+@trace fit!(WeightedCovMatrix(Float32), x2, w)
