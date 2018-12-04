@@ -39,17 +39,18 @@ function _fit!(o::WeightedCovMatrix{T}, x, w) where T
     ww = convert(T, w)
 
     o.n += 1
-    o.W = smooth(o.W, ww, 1 / o.n)
-    o.W2 = smooth(o.W2, ww*ww, 1 / o.n)
-    γ = ww / (o.W * o.n)
+    γ1 = T(1) / o.n
+    o.W = smooth(o.W, ww, γ1)
+    o.W2 = smooth(o.W2, ww*ww, γ1)
+    γ2 = ww / (o.W * o.n)
     if isempty(o.A)
         p = length(xx)
         o.b = zeros(T, p)
         o.A = zeros(T, p, p)
         o.C = zeros(T, p, p)
     end
-    smooth!(o.b, xx, γ)
-    smooth_syr!(o.A, xx, γ)
+    smooth!(o.b, xx, γ2)
+    smooth_syr!(o.A, xx, γ2)
 end
 
 function _fit!(o::WeightedCovMatrix{T1}, x::Vector{Union{T2, Missing}}, w) where {T1, T2}
@@ -67,7 +68,6 @@ function _merge!(o::WeightedCovMatrix{T}, o2::WeightedCovMatrix) where T
     o2_W = convert(T, o2.W)
     o2_W2 = convert(T, o2.W2)
 
-
     if isempty(o.A)
         o.C = convert(Matrix{T}, o2.C)
         o.A = o2_A
@@ -81,7 +81,7 @@ function _merge!(o::WeightedCovMatrix{T}, o2::WeightedCovMatrix) where T
         γ = (o2_W * o2.n) / (W * n)
         smooth!(o.A, o2_A, γ)
         smooth!(o.b, o2_b, γ)
-        
+
         o.n = n
         o.W = W
         o.W2 = smooth(o.W2, o2_W2, o2.n / o.n)

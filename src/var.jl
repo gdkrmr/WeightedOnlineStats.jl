@@ -31,8 +31,9 @@ function _fit!(o::WeightedVariance{T}, x, w) where T
     ww = convert(T, w)
 
     o.n += 1
-    o.W = smooth(o.W, ww, 1 / o.n)
-    o.W2 = smooth(o.W2, ww*ww, 1 / o.n)
+    γ1 = T(1) / o.n
+    o.W = smooth(o.W, ww, γ1)
+    o.W2 = smooth(o.W2, ww * ww, γ1)
     γ = ww / (o.W * o.n)
     μ = o.μ
 

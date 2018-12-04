@@ -25,14 +25,14 @@ function _fit!(o::WeightedSum{T}, x, w) where T
     xx = convert(T, x)
 
     o.n += 1
-    o.W += smooth(o.W, ww, 1 / o.n)
+    o.W += smooth(o.W, ww, T(1) / o.n)
     o.∑ += xx * ww
     o
 end
 
 function _merge!(o::WeightedSum{T}, o2::WeightedSum) where T
     o.n += o2.n
-    o.W = smooth(o.W, convert(T, o2.W), o2.n / o.n)
+    o.W = smooth(o.W, convert(T, o2.W), convert(T, o2.n / o.n))
     o.∑ += convert(T, o2.∑)
     o
 end

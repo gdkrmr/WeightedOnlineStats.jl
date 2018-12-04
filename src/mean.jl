@@ -26,7 +26,7 @@ function _fit!(o::WeightedMean{T}, x, w) where T
     ww = convert(T, w)
 
     o.n += 1
-    o.W = smooth(o.W, ww, 1 / o.n)
+    o.W = smooth(o.W, ww, T(1) / o.n)
     o.μ = smooth(o.μ, xx, ww / (o.W * o.n))
 
     o
