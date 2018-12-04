@@ -1,5 +1,5 @@
 name = "WeightedOnlineStats"
-uuid = "5434924c-de82-11e8-25f8-6dd717317060"
+uuid = "bbac0a1f-7c9d-5672-960b-c6ca726e5d5d"
 authors = ["Guido Kraemer <gdkrmr@users.noreply.github.com>", "Martin Gutwin <twinGu@users.noreply.github.com>"]
 version = "0.1.5"
 
