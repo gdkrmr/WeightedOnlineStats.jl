@@ -3,6 +3,7 @@ module WeightedOnlineStats
 export WeightedSum, WeightedMean,
     WeightedVariance, WeightedCovMatrix,
     WeightedHist, WeightedAdaptiveBins,
+    WeightedPCA,
     fit!, merge!, weightsum, value,
     mean, std, cov, cor, median, quantile
 
@@ -18,6 +19,7 @@ import OnlineStatsBase:
     nobs, value
 import Statistics: mean, var, std, cov, cor, median, quantile
 import LinearAlgebra: Hermitian, lmul!, rmul!, Diagonal, diag
+import MultivariateStats: PCA, pcacov
 
 include("interface.jl")
 include("sum.jl")
@@ -25,5 +27,6 @@ include("mean.jl")
 include("var.jl")
 include("covmatrix.jl")
 include("histogram.jl")
+include("pca.jl")
 
 end # module WeightedOnlineStats

@@ -8,6 +8,7 @@ using WeightedOnlineStats
 import OnlineStatsBase: eachcol, eachrow
 using StatsBase
 import OnlineStats: Extrema
+import MultivariateStats: pcacov, projection, principalvars
 using Statistics
 using Random
 
@@ -478,6 +479,153 @@ end
     @test Ref(o2.alg.ex)       != Ref(o1.alg.ex)
 end
 
+@testset "WeightedPCA fit!" begin
+    s, m, c = (map(x -> sum(x .* w), eachcol(x2)),
+               map(x -> mean(x, weights(w)), eachcol(x2)),
+               cov(x2, weights(w), corrected = false))
+    pca = pcacov(c, m)
+    pcapm = abs.(projection(pca))
+    pcavars = principalvars(pca)
+
+    ma, ca = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, aweights(w), corrected = true)
+    mf, cf = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, fweights(w), corrected = true)
+    mp, cp = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, pweights(w), corrected = true)
+
+    o = WeightedPCA()
+    for i in 1:l
+        fit!(o, x2[i,:], w[i])
+    end
+    o
+    sfor, mfor, cfor = sum(o), mean(o), cov(o)
+
+    pcafor = value(o)
+    pcaforpm = abs.(projection(pcafor))
+    pcaforvars = principalvars(pcafor)
+
+    o_32 = WeightedPCA(Float32)
+    for i in 1:l
+        fit!(o_32, x2[i,:], w[i])
+    end
+    o_32
+    sfor_32, mfor_32, cfor_32 = sum(o_32), mean(o_32), cov(o_32)
+
+    pcafor_32 = value(o_32)
+    pcaforpm_32 = abs.(projection(pcafor_32))
+    pcaforvars_32 = principalvars(pcafor_32)
+
+    sval, mval, cval, pcaval = fit!(WeightedPCA(), x2, w) |> x -> (sum(x), mean(x), cov(x), value(x))
+    szip, mzip, czip, pcazip = fit!(WeightedPCA(), zip(eachrow(x2), w)) |> x -> (sum(x), mean(x), cov(x), value(x))
+
+    pcavalpm = abs.(projection(pcaval))
+    pcavalvars = principalvars(pcaval)
+    pcazippm = abs.(projection(pcazip))
+    pcazipvars = principalvars(pcazip)
+
+    mvala, cvala = fit!(WeightedPCA(), x2, w) |>
+        x -> (mean(x), cov(x, corrected = true, weight_type = :analytic))
+    mvalf, cvalf = fit!(WeightedPCA(), x2, w) |>
+        x -> (mean(x), cov(x, corrected = true, weight_type = :frequency))
+    @test_throws ArgumentError fit!(WeightedPCA(), x2, w) |>
+        x -> (mean(x), cov(x, corrected = true, weight_type = :something))
+
+    @test c ≈ czip
+    @test c ≈ cfor
+    @test c ≈ cfor_32
+    @test c ≈ cval
+    @test m ≈ mzip
+    @test m ≈ mfor
+    @test m ≈ mfor_32
+    @test m ≈ mval
+    @test pcapm ≈ pcazippm
+    @test pcapm ≈ pcaforpm
+    @test pcapm ≈ pcaforpm_32
+    @test pcapm ≈ pcavalpm
+    @test pcavars ≈ pcazipvars
+    @test pcavars ≈ pcaforvars
+    @test pcavars ≈ pcaforvars_32
+    @test pcavars ≈ pcavalvars
+    @test ca ≈ cvala
+    @test cf ≈ cvalf
+    @test ma ≈ mvala
+    @test mf ≈ mvalf
+
+    @test s ≈ sfor
+    @test s ≈ sfor_32
+    @test s ≈ sval
+    @test s ≈ szip
+
+    # After implementing :probability, these should pass/not throw any more:
+    @test_throws ErrorException mvalp, vvalp = fit!(WeightedPCA(), x2, w) |>
+        x -> (mean(x), cov(x, corrected = true, weight_type = :probability))
+    @test_broken vp ≈ vvalp
+    @test_broken mp ≈ mvalp
+
+    @test eltype(o) == Float64
+    @test eltype(o_32) == Float32
+
+    oold = copy(o)
+    fit!(o, [missing, 1, 2, 3, 4], 1)
+    @test o == oold
+    fit!(o, [1, 2, 3, 4, 5], missing)
+    @test o == oold
+end
+
+@testset "WeightedPCA merge!" begin
+    c = cov(x2, weights(w), corrected = false)
+
+    wc = fit!(WeightedPCA(), x2, w)
+    oc = map(eachrow(x2), w) do xi, wi
+        fit!(WeightedPCA(), xi, wi)
+    end;
+    rc = reduce(merge!, deepcopy(oc))
+    rc2 = merge!(
+        fit!(WeightedPCA(), x2[1:end ÷ 2, :],       w[1:end ÷ 2]),
+        fit!(WeightedPCA(), x2[end ÷ 2 + 1:end, :], w[end ÷ 2 + 1:end]))
+
+    rc_32 = reduce(merge!, deepcopy(oc), init = WeightedPCA(Float32))
+    rc2_32 = merge!(
+        fit!(WeightedPCA(Float32), x2[1:end ÷ 2, :],       w[1:end ÷ 2]),
+        fit!(WeightedPCA(),        x2[end ÷ 2 + 1:end, :], w[end ÷ 2 + 1:end]))
+
+    @test rc.WCM.b ≈ wc.WCM.b
+    @test rc.WCM.C ≈ wc.WCM.C
+    @test rc.WCM.W ≈ wc.WCM.W
+    @test rc.WCM.W2 ≈ wc.WCM.W2
+
+    @test rc2.WCM.b ≈ wc.WCM.b
+    @test rc2.WCM.C ≈ wc.WCM.C
+    @test rc2.WCM.W ≈ wc.WCM.W
+    @test rc2.WCM.W2 ≈ wc.WCM.W2
+
+    @test cov(rc) ≈ c
+    @test cov(rc2) ≈ c
+
+    @test rc_32.WCM.b ≈ wc.WCM.b
+    @test rc_32.WCM.C ≈ wc.WCM.C
+    @test rc_32.WCM.W ≈ wc.WCM.W
+    @test rc_32.WCM.W2 ≈ wc.WCM.W2
+
+    @test rc2_32.WCM.b ≈ wc.WCM.b
+    @test rc2_32.WCM.C ≈ wc.WCM.C
+    @test rc2_32.WCM.W ≈ wc.WCM.W
+    @test rc2_32.WCM.W2 ≈ wc.WCM.W2
+
+    @test cov(rc_32) ≈ c
+    @test cov(rc2_32) ≈ c
+
+    @test eltype(rc) == Float64
+    @test eltype(rc2) == Float64
+    @test eltype(rc_32) == Float32
+    @test eltype(rc2_32) == Float32
+end
+
+d1, w1 = fill(1, 40), fill(4, 40)
+d2, w2 = fill(2, 30), fill(3, 30)
+d3, w3 = fill(3, 20), fill(2, 20)
+d4, w4 = fill(4, 10), fill(1, 10)
+
+d, wh = vcat(d1, d2, d3, d4), vcat(w1, w2, w3, w4)
+
 @testset "Constructors" begin
     @test WeightedSum{Float64}() == WeightedSum()
     @test WeightedSum{Float32}() == WeightedSum(Float32)
@@ -499,6 +647,10 @@ end
                                                    zeros(Float64, 0, 0),
                                                    zeros(Float64, 0),
                                                    0.0, 0.0, 0)
+
+    @test WeightedPCA{Float64}() == WeightedPCA()
+    @test WeightedPCA{Float32}() == WeightedPCA(Float32)
+    @test WeightedPCA() == WeightedPCA(WeightedCovMatrix(Float64, 0))
 
     @test WeightedHist{WeightedAdaptiveBins{Float64}}(
         WeightedAdaptiveBins{Float64}(
