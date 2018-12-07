@@ -276,6 +276,24 @@ end
     @test eltype(rv2_32) == Float32
 end
 
+@testset "WeightedVariance copy" begin
+    o = fit!(WeightedVariance(), x2, w)
+
+    o2 = copy(o)
+
+    @test Ref(o.μ) != Ref(o.μ)
+    @test Ref(o.σ2) != Ref(o.σ2)
+    @test Ref(o.W) != Ref(o2.W)
+    @test Ref(o.W2) != Ref(o2.W2)
+    @test Ref(o.n) != Ref(o2.n)
+
+    @test o.μ == o2.μ
+    @test o.σ2 == o2.σ2
+    @test o.W == o2.W
+    @test o.W2 == o2.W2
+    @test o.n == o2.n
+end
+
 @testset "WeightedCovMatrix fit!" begin
     s, m, c = (map(x -> sum(x .* w), eachcol(x2)),
                map(x -> mean(x, weights(w)), eachcol(x2)),

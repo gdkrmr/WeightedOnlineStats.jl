@@ -108,4 +108,4 @@ function var(o::WeightedVariance; corrected = false, weight_type = :analytic)
     end
 end
 std(o::WeightedVariance; kw...) = sqrt.(var(o; kw...))
-Base.copy(o::WeightedVariance) = WeightedVariance(o.μ, o.σ2, o.W, o.W2)
+Base.copy(o::WeightedVariance) = WeightedVariance(o.μ, o.σ2, o.W, o.W2, o.n)
