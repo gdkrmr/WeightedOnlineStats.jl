@@ -20,16 +20,28 @@ mutable struct WeightedCovMatrix{T} <: WeightedOnlineStat{VectorOb}
     W2::T
     n::Int
     function WeightedCovMatrix{T}(
-            C = zeros(T, 0, 0), A = zeros(T, 0, 0),
-            b = zeros(T, 0), W = T(0), W2 = T(0), n = 0) where T
+            C = zeros(T, 0, 0),
+            A = zeros(T, 0, 0),
+            b = zeros(T, 0),
+            W = T(0),
+            W2 = T(0),
+            n = 0
+        ) where T
         new{T}(C, A, b, W, W2, n)
     end
 end
 
-WeightedCovMatrix(
-        C::Matrix{T}, A::Matrix{T}, b::Vector{T}, W::T, W2::T, n::Int
-    ) where T =
+function WeightedCovMatrix(
+        C::Matrix{T},
+        A::Matrix{T},
+        b::Vector{T},
+        W::T,
+        W2::T,
+        n::Int
+    ) where T
     WeightedCovMatrix{T}(C, A, b, W, W2, n)
+end
+
 WeightedCovMatrix(::Type{T}, p::Int=0) where T =
     WeightedCovMatrix(zeros(T, p, p), zeros(T, p, p), zeros(T, p), T(0), T(0), 0)
 WeightedCovMatrix() = WeightedCovMatrix(Float64)
@@ -93,27 +105,31 @@ end
 nvars(o::WeightedCovMatrix) = size(o.A, 1)
 
 function value(o::WeightedCovMatrix)
-    o.C[:] = Matrix(Hermitian((o.A - o.b * o.b')))
+    o.C[:] = Matrix(LinearAlgebra.Hermitian((o.A - o.b * o.b')))
     o.C
 end
 
-function cov(o::WeightedCovMatrix; corrected = false, weight_type = :analytic)
+function Statistics.cov(o::WeightedCovMatrix; corrected = false, weight_type = :analytic)
     if corrected
         if weight_type == :analytic
-            rmul!(value(o), 1 / (1 - (o.W2 * nobs(o)) / (weightsum(o) ^ 2)))
+            LinearAlgebra.rmul!(
+                value(o), 1 / (1 - (o.W2 * nobs(o)) / (weightsum(o) ^ 2))
+            )
         elseif weight_type == :frequency
-            rmul!(value(o), 1 / (weightsum(o) - 1) * weightsum(o))
+            LinearAlgebra.rmul!(
+                value(o), 1 / (weightsum(o) - 1) * weightsum(o)
+            )
         elseif weight_type == :probability
             error("If you need this, please make a PR or open an issue")
         else
             throw(ArgumentError("weight type $weight_type not implemented"))
         end
     else
-        value(o)
+        OnlineStatsBase.value(o)
     end
 end
 
-function cor(o::WeightedCovMatrix; kw...)
+function Statistics.cor(o::WeightedCovMatrix; kw...)
     cov(o; kw...)
     v = 1 ./ sqrt.(diag(o.C))
     rmul!(o.C, Diagonal(v))
@@ -122,11 +138,10 @@ function cor(o::WeightedCovMatrix; kw...)
 end
 
 Base.sum(o::WeightedCovMatrix) = o.b .* (meanweight(o) * nobs(o))
-mean(o::WeightedCovMatrix) = o.b
-var(o::WeightedCovMatrix; kw...) = diag(cov(o; kw...))
-std(o::WeightedCovMatrix; kw...) = sqrt.(var(o; kw...))
+Statistics.mean(o::WeightedCovMatrix) = o.b
+Statistics.var(o::WeightedCovMatrix; kw...) = diag(cov(o; kw...))
+Statistics.std(o::WeightedCovMatrix; kw...) = sqrt.(var(o; kw...))
 
 Base.eltype(o::WeightedCovMatrix{T}) where T = T
 Base.copy(o::WeightedCovMatrix) =
-    WeightedCovMatrix(copy(o.C), copy(o.A), copy(o.b),
-                      o.W, o.W2, o.n)
+    WeightedCovMatrix(copy(o.C), copy(o.A), copy(o.b), o.W, o.W2, o.n)

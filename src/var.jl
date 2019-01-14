@@ -16,7 +16,9 @@ mutable struct WeightedVariance{T} <: WeightedOnlineStat{T}
     W::T
     W2::T
     n::Int
-    function WeightedVariance{T}(μ = T(0), σ2 = T(0), W = T(0), W2 = T(0), n = 0) where T
+    function WeightedVariance{T}(
+            μ = T(0), σ2 = T(0), W = T(0), W2 = T(0), n = 0
+        ) where T
         new{T}(T(μ), T(σ2), T(W), T(W2), Int(n))
     end
 end
@@ -26,7 +28,7 @@ WeightedVariance(μ::T, σ2::T, W::T, W2::T, n::Int) where T =
 WeightedVariance(::Type{T}) where T = WeightedVariance(T(0), T(0), T(0), T(0), 0)
 WeightedVariance() = WeightedVariance(Float64)
 
-function _fit!(o::WeightedVariance{T}, x, w) where T
+function OnlineStatsBase._fit!(o::WeightedVariance{T}, x, w) where T
     xx = convert(T, x)
     ww = convert(T, w)
 
@@ -43,7 +45,10 @@ function _fit!(o::WeightedVariance{T}, x, w) where T
     return o
 end
 
-function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
+function OnlineStatsBase._merge!(
+        o::WeightedVariance{T},
+        o2::WeightedVariance
+    ) where T
 
     o2_μ = convert(T, o2.μ)
     o2_σ2 = convert(T, o2.σ2)
@@ -69,7 +74,7 @@ function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
     o.n = n
     o.μ = μ
     o.W = W
-    o.W2 = smooth(o.W2, o2_W2, o2.n / o.n)
+    o.W2 = OnlineStats.smooth(o.W2, o2_W2, o2.n / o.n)
 
 
     ###########################################
@@ -79,8 +84,8 @@ function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
     # γ = o2_W / (o2_W + o.W)
     # δ = o2_μ - o.μ
     #
-    # o.σ2 = smooth(o.σ2, o2_σ2, γ) + (δ ^ 2) * γ * (1.0 - γ)
-    # o.μ = smooth(o.μ, o2_μ, γ)
+    # o.σ2 = OnlineStats.smooth(o.σ2, o2_σ2, γ) + (δ ^ 2) * γ * (1.0 - γ)
+    # o.μ = OnlineStats.smooth(o.μ, o2_μ, γ)
     # # o.σ2 = o.σ2 + (o.W + o2_W) * (μ)
     #
     # o.W += o2_W
@@ -89,13 +94,17 @@ function _merge!(o::WeightedVariance{T}, o2::WeightedVariance) where T
     return o
 end
 
-value(o::WeightedVariance) = o.σ2
+OnlineStatsBase.value(o::WeightedVariance) = o.σ2
 Base.sum(o::WeightedVariance) = mean(o) * meanweight(o) * nobs(o)
-mean(o::WeightedVariance) = o.μ
-function var(o::WeightedVariance; corrected = false, weight_type = :analytic)
+Statistics.mean(o::WeightedVariance) = o.μ
+function Statistics.var(
+        o::WeightedVariance;
+        corrected = false,
+        weight_type = :analytic
+    )
     if corrected
         if weight_type == :analytic
-            value(o) / (1 - (o.W2*nobs(o)) / (weightsum(o) ^ 2))
+            value(o) / (1 - (o.W2 * nobs(o)) / (weightsum(o) ^ 2))
         elseif weight_type == :frequency
             value(o) / (weightsum(o) - 1) * weightsum(o)
         elseif weight_type == :probability
@@ -107,5 +116,5 @@ function var(o::WeightedVariance; corrected = false, weight_type = :analytic)
         value(o)
     end
 end
-std(o::WeightedVariance; kw...) = sqrt.(var(o; kw...))
+Statistics.std(o::WeightedVariance; kw...) = sqrt.(var(o; kw...))
 Base.copy(o::WeightedVariance) = WeightedVariance(o.μ, o.σ2, o.W, o.W2, o.n)

@@ -20,7 +20,7 @@ WeightedSum(∑::T, W::T, n::Int) where T = WeightedSum{T}(∑, W, n)
 WeightedSum(::Type{T}) where T = WeightedSum(T(0), T(0), 0)
 WeightedSum() = WeightedSum(Float64)
 
-function _fit!(o::WeightedSum{T}, x, w) where T
+function WeightedOnlineStats._fit!(o::WeightedSum{T}, x, w) where T
     ww = convert(T, w)
     xx = convert(T, x)
 
@@ -30,13 +30,13 @@ function _fit!(o::WeightedSum{T}, x, w) where T
     o
 end
 
-function _merge!(o::WeightedSum{T}, o2::WeightedSum) where T
+function WeightedOnlineStats._merge!(o::WeightedSum{T}, o2::WeightedSum) where T
     o.n += o2.n
     o.W = smooth(o.W, convert(T, o2.W), convert(T, o2.n / o.n))
     o.∑ += convert(T, o2.∑)
     o
 end
 
-value(o::WeightedSum) = o.∑
+OnlineStatsBase.value(o::WeightedSum) = o.∑
 Base.sum(o::WeightedSum) = value(o)
 Base.copy(o::WeightedSum) = WeightedSum(o.∑, o.W)

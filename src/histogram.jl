@@ -28,7 +28,9 @@ struct WeightedHist{N, H <: WeightedHistAlgorithm{N}} <: WeightedOnlineStat{N}
     alg::H
     WeightedHist{H}(alg::H) where {N, H<:WeightedHistAlgorithm{N}} = new{N, H}(alg)
 end
+
 WeightedHist(args...; kw...) = (alg = make_alg(args...; kw...); WeightedHist{typeof(alg)}(alg))
+
 for f in [:nobs, :counts, :midpoints, :edges, :area]
     @eval $f(o::WeightedHist) = $f(o.alg)
 end
@@ -39,22 +41,22 @@ end
 Base.copy(o::WeightedHist) = WeightedHist(copy(o.alg))
 
 # Base.show(io::IO, o::Hist) = print(io, "Hist: ", o.alg)
-_merge!(o::WeightedHist, o2::WeightedHist) = _merge!(o.alg, o2.alg)
-function value(o::WeightedHist)
+OnlineStatsBase._merge!(o::WeightedHist, o2::WeightedHist) = _merge!(o.alg, o2.alg)
+function OnlineStatsBase.value(o::WeightedHist)
     (midpoints(o), counts(o))
 end
 
 split_candidates(o::WeightedHist) = midpoints(o)
-mean(o::WeightedHist) = mean(midpoints(o), fweights(counts(o)))
-var(o::WeightedHist) = var(midpoints(o), fweights(counts(o)); corrected=true)
-std(o::WeightedHist) = sqrt(var(o))
-median(o::WeightedHist) = quantile(o, .5)
+Statistics.mean(o::WeightedHist) = mean(midpoints(o), fweights(counts(o)))
+Statistics.var(o::WeightedHist) = var(midpoints(o), fweights(counts(o)); corrected=true)
+Statistics.std(o::WeightedHist) = sqrt(var(o))
+Statistics.median(o::WeightedHist) = quantile(o, .5)
 function Base.extrema(o::WeightedHist)
     mids, counts = value(o)
     inds = findall(x->x!=0, counts)  # filter out zero weights
     mids[inds[1]], mids[inds[end]]
 end
-function quantile(o::WeightedHist, p = [0, .25, .5, .75, 1])
+function Statistics.quantile(o::WeightedHist, p = [0, .25, .5, .75, 1])
     mids, counts = value(o)
     inds = findall(x->x!=0, counts)  # filter out zero weights
     quantile(mids[inds], fweights(counts[inds]), p)
@@ -87,16 +89,18 @@ make_alg(T::Type, b::Int) = WeightedAdaptiveBins{T}(Pair{T, T}[], b, Extrema(T))
 make_alg(b::Int) = WeightedAdaptiveBins{Float64}(Pair{Float64, Float64}[], b, Extrema(Float64))
 midpoints(o::WeightedAdaptiveBins) = first.(o.value)
 counts(o::WeightedAdaptiveBins) = last.(o.value)
-nobs(o::WeightedAdaptiveBins) = isempty(o.value) ? 0 : sum(last, o.value)
+OnlineStatsBase.nobs(o::WeightedAdaptiveBins) =
+    isempty(o.value) ? 0 : sum(last, o.value)
 function Base.:(==)(a::T, b::T) where {T<:WeightedAdaptiveBins}
     (a.value == b.value) && (a.b == b.b) && (a.ex == b.ex)
 end
 Base.extrema(o::WeightedHist{<:Any, <:WeightedAdaptiveBins}) = extrema(o.alg.ex)
 
 # Doesn't happen with weighted stats
-_fit!(o::WeightedAdaptiveBins, y::Number, w::Number) = _fit!(o, Pair(y, w))
+OnlineStatsBase._fit!(o::WeightedAdaptiveBins, y::Number, w::Number) =
+    _fit!(o, Pair(y, w))
 
-function _fit!(o::WeightedAdaptiveBins{T}, y::Pair) where T
+function OnlineStatsBase._fit!(o::WeightedAdaptiveBins{T}, y::Pair) where T
     y2 = convert(Pair{T, T}, y)
 
     fit!(o.ex, first(y2))
@@ -125,7 +129,7 @@ function _fit!(o::WeightedAdaptiveBins{T}, y::Pair) where T
     end
 end
 
-function _merge!(o::T, o2::T) where {T <: WeightedAdaptiveBins}
+function OnlineStatsBase._merge!(o::T, o2::T) where {T <: WeightedAdaptiveBins}
     for v in o2.value
         _fit!(o, v)
     end

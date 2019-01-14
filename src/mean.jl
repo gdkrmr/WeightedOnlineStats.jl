@@ -21,7 +21,7 @@ WeightedMean(μ::T, W::T, n::Int) where T = WeightedMean{T}(μ, W, n)
 WeightedMean(::Type{T}) where T = WeightedMean(T(0), T(0), 0)
 WeightedMean() = WeightedMean(Float64)
 
-function _fit!(o::WeightedMean{T}, x, w) where T
+function OnlineStatsBase._fit!(o::WeightedMean{T}, x, w) where T
     xx = convert(T, x)
     ww = convert(T, w)
 
@@ -32,7 +32,7 @@ function _fit!(o::WeightedMean{T}, x, w) where T
     o
 end
 
-function _merge!(o::WeightedMean{T}, o2::WeightedMean) where T
+function OnlineStatsBase._merge!(o::WeightedMean{T}, o2::WeightedMean) where T
     o2_W = convert(T, o2.W)
     o2_μ = convert(T, o2.μ)
 
@@ -42,7 +42,8 @@ function _merge!(o::WeightedMean{T}, o2::WeightedMean) where T
 
     o
 end
-value(o::WeightedMean) = o.μ
-mean(o::WeightedMean) = value(o)
+
+OnlineStatsBase.value(o::WeightedMean) = o.μ
+Statistics.mean(o::WeightedMean) = value(o)
 Base.sum(o::WeightedMean) = mean(o) * weightsum(o)
 Base.copy(o::WeightedMean) = WeightedMean(o.μ, o.W, o.n)
