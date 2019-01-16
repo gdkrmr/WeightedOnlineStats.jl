@@ -28,6 +28,7 @@ include("sum.jl")
 include("mean.jl")
 include("var.jl")
 include("covmatrix.jl")
+include("pca.jl")
 include("histogram.jl")
 
 end # module WeightedOnlineStats

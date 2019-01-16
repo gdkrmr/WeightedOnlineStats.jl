@@ -104,7 +104,7 @@ end
 
 nvars(o::WeightedCovMatrix) = size(o.A, 1)
 
-function value(o::WeightedCovMatrix)
+function OnlineStatsBase.value(o::WeightedCovMatrix)
     o.C[:] = Matrix(LinearAlgebra.Hermitian((o.A - o.b * o.b')))
     o.C
 end
@@ -145,3 +145,6 @@ Statistics.std(o::WeightedCovMatrix; kw...) = sqrt.(var(o; kw...))
 Base.eltype(o::WeightedCovMatrix{T}) where T = T
 Base.copy(o::WeightedCovMatrix) =
     WeightedCovMatrix(copy(o.C), copy(o.A), copy(o.b), o.W, o.W2, o.n)
+
+Base.size(x::WeightedCovMatrix, i) = size(x.C, i)
+Base.size(x::WeightedCovMatrix) = size(x.C)

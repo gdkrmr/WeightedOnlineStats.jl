@@ -10,6 +10,7 @@ using StatsBase
 import OnlineStats: Extrema
 using Statistics
 using Random
+using MultivariateStats
 
 
 Random.seed!(123)
@@ -48,4 +49,5 @@ include("test_sum.jl")
 include("test_mean.jl")
 include("test_var.jl")
 include("test_cov.jl")
+include("test_pca.jl")
 include("test_hist.jl")
