@@ -125,8 +125,8 @@ function Statistics.cov(o::WeightedCovMatrix; corrected = false, weight_type = :
             throw(ArgumentError("weight type $weight_type not implemented"))
         end
     else
-        OnlineStatsBase.value(o)
-    end
+        value(o)
+    end |> copy
 end
 
 function Statistics.cor(o::WeightedCovMatrix; kw...)
@@ -134,11 +134,11 @@ function Statistics.cor(o::WeightedCovMatrix; kw...)
     v = 1 ./ sqrt.(diag(o.C))
     rmul!(o.C, Diagonal(v))
     lmul!(Diagonal(v), o.C)
-    o.C
+    copy(o.C)
 end
 
 Base.sum(o::WeightedCovMatrix) = o.b .* (meanweight(o) * nobs(o))
-Statistics.mean(o::WeightedCovMatrix) = o.b
+Statistics.mean(o::WeightedCovMatrix) = copy(o.b)
 Statistics.var(o::WeightedCovMatrix; kw...) = diag(cov(o; kw...))
 Statistics.std(o::WeightedCovMatrix; kw...) = sqrt.(var(o; kw...))
 
