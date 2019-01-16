@@ -3,6 +3,8 @@
 
 Weighted covariance matrix, tracked as a matrix of type `T`.
 
+*After* a call to `cov` the covariance matrix is stored in `o.C`.
+
 # Example:
     o = fit!(WeightedCovMatrix(), rand(100, 4), rand(100))
     sum(o)
@@ -105,7 +107,15 @@ end
 nvars(o::WeightedCovMatrix) = size(o.A, 1)
 
 function OnlineStatsBase.value(o::WeightedCovMatrix)
-    o.C[:] = Matrix(LinearAlgebra.Hermitian((o.A - o.b * o.b')))
+    # o.A is only the upper triangle:
+    # o.C .= o.A .- o.b .* o.b'
+    @inbounds for i in 1:size(o.A, 1)
+        for j in 1:i
+            o.C[j, i] = o.A[j, i] - o.b[i] * o.b[j]
+        end
+
+    end
+    LinearAlgebra.copytri!(o.C, 'U')
     o.C
 end
 
@@ -126,14 +136,14 @@ function Statistics.cov(o::WeightedCovMatrix; corrected = false, weight_type = :
         end
     else
         value(o)
-    end |> copy
+    end
 end
 
 function Statistics.cor(o::WeightedCovMatrix; kw...)
     cov(o; kw...)
-    v = 1 ./ sqrt.(diag(o.C))
-    rmul!(o.C, Diagonal(v))
-    lmul!(Diagonal(v), o.C)
+    v = diag(o.C)
+    v .= 1 ./ sqrt.(v)
+    o.C .= o.C .* v .* v'
     copy(o.C)
 end
 
