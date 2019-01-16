@@ -1,5 +1,5 @@
 """
-WeightedVariance(T = Float64)
+    WeightedVariance(T = Float64)
 
 Simple weighted variance, tracked as type `T`.
 

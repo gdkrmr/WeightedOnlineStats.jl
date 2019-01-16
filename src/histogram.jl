@@ -9,7 +9,7 @@ make_alg(o::WeightedHistAlgorithm) = o
 
 #-----------------------------------------------------------------------# Hist
 """
-Weighted Historgram
+    Weighted Historgram
 
 Calculate a histogram of weighted data.
 

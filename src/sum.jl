@@ -1,5 +1,5 @@
 """
-WeightedSum(T = Float64)
+    WeightedSum(T = Float64)
 
 Simple weighted sum, tracked as type `T`.
 

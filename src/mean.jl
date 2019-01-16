@@ -1,5 +1,5 @@
 """
-WeightedMean(T = Float64)
+    WeightedMean(T = Float64)
 
 Simple weighted mean, tracked as type `T`.
 

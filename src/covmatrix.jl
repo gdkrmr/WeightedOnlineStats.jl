@@ -1,5 +1,5 @@
 """
-WeightedCovMatrix(T = Float64)
+    WeightedCovMatrix(T = Float64)
 
 Weighted covariance matrix, tracked as a matrix of type `T`.
 
