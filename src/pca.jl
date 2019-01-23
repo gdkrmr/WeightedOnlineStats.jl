@@ -1,3 +1,4 @@
+import StatsBase
 import StatsBase: ZScoreTransform
 export ZScoreTransform
 
