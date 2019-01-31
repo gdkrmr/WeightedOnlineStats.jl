@@ -140,4 +140,6 @@ end
                                                    zeros(Float64, 0, 0),
                                                    zeros(Float64, 0),
                                                    0.0, 0.0, 0)
+    @test convert(WeightedCovMatrix{Float32}, WeightedCovMatrix()) ==
+        WeightedCovMatrix{Float32}()
 end

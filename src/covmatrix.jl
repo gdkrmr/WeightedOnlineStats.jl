@@ -158,3 +158,15 @@ Base.copy(o::WeightedCovMatrix) =
 
 Base.size(x::WeightedCovMatrix, i) = size(x.C, i)
 Base.size(x::WeightedCovMatrix) = size(x.C)
+
+
+function Base.convert(::Type{WeightedCovMatrix{T}}, o::WeightedCovMatrix) where T
+    WeightedCovMatrix{T}(
+        convert(Matrix{T}, o.C),
+        convert(Matrix{T}, o.A),
+        convert(Vector{T}, o.b),
+        convert(T,         o.W),
+        convert(T,         o.W2),
+        o.n
+    )
+end
