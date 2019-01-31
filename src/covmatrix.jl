@@ -143,8 +143,7 @@ function Statistics.cor(o::WeightedCovMatrix; kw...)
     cov(o; kw...)
     v = diag(o.C)
     v .= 1 ./ sqrt.(v)
-    o.C .= o.C .* v .* v'
-    copy(o.C)
+    return o.C .* v .* v'
 end
 
 Base.sum(o::WeightedCovMatrix) = o.b .* (meanweight(o) * nobs(o))
