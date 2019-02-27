@@ -2,5 +2,4 @@ julia 0.7
 OnlineStats
 OnlineStatsBase
 StatsBase
-LinearAlgebra
 MultivariateStats
