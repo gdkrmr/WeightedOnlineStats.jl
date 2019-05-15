@@ -45,9 +45,9 @@ function test_fit(T::Type{<: WeightedOnlineStats.WeightedOnlineStat{S}},
     @test eltype(unpack_fun(o)) == eltype(o)
 end
 
+include("test_hist.jl")
 include("test_sum.jl")
 include("test_mean.jl")
 include("test_var.jl")
 include("test_cov.jl")
 include("test_pca.jl")
-include("test_hist.jl")
