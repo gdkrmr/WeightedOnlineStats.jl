@@ -15,7 +15,7 @@ Calculate a histogram of weighted data.
 
 # Example
     # A weighted histogram with 4 bins:
-    o = fit!(WeightedHist(4), rand(1000), rand(1000))
+    o = fit!(WeightedAdaptiveHist(4), rand(1000), rand(1000))
 
     mean(o)
     var(o)
@@ -24,52 +24,52 @@ Calculate a histogram of weighted data.
     quantile(o, [0, 0.25, 0.5, 0.25, 1.0])
     extrema(o)
 """
-struct WeightedHist{N, H <: WeightedHistAlgorithm{N}} <: WeightedOnlineStat{N}
+struct WeightedAdaptiveHist{N, H <: WeightedHistAlgorithm{N}} <: WeightedOnlineStat{N}
     alg::H
-    WeightedHist{H}(alg::H) where {N, H<:WeightedHistAlgorithm{N}} = new{N, H}(alg)
+    WeightedAdaptiveHist{H}(alg::H) where {N, H<:WeightedHistAlgorithm{N}} = new{N, H}(alg)
 end
 
-WeightedHist(args...; kw...) = (alg = make_alg(args...; kw...); WeightedHist{typeof(alg)}(alg))
+WeightedAdaptiveHist(args...; kw...) = (alg = make_alg(args...; kw...); WeightedAdaptiveHist{typeof(alg)}(alg))
 
 for f in [:nobs, :counts, :midpoints, :edges, :area]
-    @eval $f(o::WeightedHist) = $f(o.alg)
+    @eval $f(o::WeightedAdaptiveHist) = $f(o.alg)
 end
 for f in [:(_fit!), :pdf, :cdf, :(Base.getindex)]
-    @eval $f(o::WeightedHist, y, w) = $f(o.alg, y, w)
+    @eval $f(o::WeightedAdaptiveHist, y, w) = $f(o.alg, y, w)
 end
 
-Base.copy(o::WeightedHist) = WeightedHist(copy(o.alg))
+Base.copy(o::WeightedAdaptiveHist) = WeightedAdaptiveHist(copy(o.alg))
 
 # Base.show(io::IO, o::Hist) = print(io, "Hist: ", o.alg)
-OnlineStatsBase._merge!(o::WeightedHist, o2::WeightedHist) = _merge!(o.alg, o2.alg)
-function OnlineStatsBase.value(o::WeightedHist)
+OnlineStatsBase._merge!(o::WeightedAdaptiveHist, o2::WeightedAdaptiveHist) = _merge!(o.alg, o2.alg)
+function OnlineStatsBase.value(o::WeightedAdaptiveHist)
     (midpoints(o), counts(o))
 end
 
-split_candidates(o::WeightedHist) = midpoints(o)
-Statistics.mean(o::WeightedHist) = mean(midpoints(o), fweights(counts(o)))
-Statistics.var(o::WeightedHist) = var(midpoints(o), fweights(counts(o)); corrected=true)
-Statistics.std(o::WeightedHist) = sqrt(var(o))
-Statistics.median(o::WeightedHist) = quantile(o, .5)
-function Base.extrema(o::WeightedHist)
+split_candidates(o::WeightedAdaptiveHist) = midpoints(o)
+Statistics.mean(o::WeightedAdaptiveHist) = mean(midpoints(o), fweights(counts(o)))
+Statistics.var(o::WeightedAdaptiveHist) = var(midpoints(o), fweights(counts(o)); corrected=true)
+Statistics.std(o::WeightedAdaptiveHist) = sqrt(var(o))
+Statistics.median(o::WeightedAdaptiveHist) = quantile(o, .5)
+function Base.extrema(o::WeightedAdaptiveHist)
     mids, counts = value(o)
     inds = findall(x->x!=0, counts)  # filter out zero weights
     mids[inds[1]], mids[inds[end]]
 end
-function Statistics.quantile(o::WeightedHist, p = [0, .25, .5, .75, 1])
+function Statistics.quantile(o::WeightedAdaptiveHist, p = [0, .25, .5, .75, 1])
     mids, counts = value(o)
     inds = findall(x->x!=0, counts)  # filter out zero weights
     quantile(mids[inds], fweights(counts[inds]), p)
 end
 
-function Base.show(io::IO, o::WeightedHist)
+function Base.show(io::IO, o::WeightedAdaptiveHist)
     print(io, name(o, false, false), ": ")
     print(io, "∑wᵢ=", nobs(o))
     print(io, " | value=")
     show(IOContext(io, :compact => true), value(o))
 end
 
-function weightsum(o::WeightedHist)
+function weightsum(o::WeightedAdaptiveHist)
     nobs(o)
 end
 
@@ -94,7 +94,7 @@ OnlineStatsBase.nobs(o::WeightedAdaptiveBins) =
 function Base.:(==)(a::T, b::T) where {T<:WeightedAdaptiveBins}
     (a.value == b.value) && (a.b == b.b) && (a.ex == b.ex)
 end
-Base.extrema(o::WeightedHist{<:Any, <:WeightedAdaptiveBins}) = extrema(o.alg.ex)
+Base.extrema(o::WeightedAdaptiveHist{<:Any, <:WeightedAdaptiveBins}) = extrema(o.alg.ex)
 
 # Doesn't happen with weighted stats
 OnlineStatsBase._fit!(o::WeightedAdaptiveBins, y::Number, w::Number) =
