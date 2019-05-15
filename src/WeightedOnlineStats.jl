@@ -2,7 +2,7 @@ module WeightedOnlineStats
 
 export WeightedSum, WeightedMean,
     WeightedVariance, WeightedCovMatrix,
-    WeightedAdaptiveHist, WeightedAdaptiveBins,
+    WeightedHist, WeightedAdaptiveHist, WeightedAdaptiveBins,
     fit!, merge!, weightsum, value,
     mean, std, cov, cor, median, quantile
 
