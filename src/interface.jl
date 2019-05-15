@@ -24,8 +24,8 @@ end
 OnlineStatsBase.fit!(o::WeightedOnlineStat{VectorOb}, xi::VectorOb, wi::Missing) = o
 
 function OnlineStatsBase.fit!(o::WeightedOnlineStat, y, w::AbstractVector)
-    for i in 1:length(w)
-        fit!(o, y[i], w[i])
+    for (yy, ww) in zip(y, w)
+        fit!(o, yy, ww)
     end
     o
 end
