@@ -78,3 +78,26 @@ end
     ) == WeightedAdaptiveHist(Float32, 20)
     @test WeightedAdaptiveHist(20) == WeightedAdaptiveHist(Float64, 20)
 end
+
+@testset "WeightedHist" begin
+    h = WeightedHist(-3:1:1)
+
+    fit!(h, -2.5,1.3)
+    @test h.counts == [1.3, 0,0,0]
+
+    fit!(h, (-2.1, 1.0))
+    @test h.counts == [2.3, 0,0,0]
+
+    fit!(h, (-20, 2.0))
+    @test h.counts == [2.3, 0,0,0]
+    @test h.out == [2.0, 0]
+
+    fit!(h, 20, 1.7)
+    @test h.counts == [2.3, 0,0,0]
+    @test h.out == [2.0, 1.7]
+
+    fit!(h, -0.1, 1.1)
+    @test h.counts == [2.3, 0,1.1,0]
+    @test h.edges === -3:1:1
+    @test h.out == [2.0, 1.7]
+end

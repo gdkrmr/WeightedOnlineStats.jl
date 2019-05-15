@@ -3,13 +3,118 @@
 # Modifying it to work with WeightedOnlineStats
 ##############################################################
 
+abstract type WeightedHistogramStat{T} <: WeightedOnlineStat{T} end
+split_candidates(o::WeightedHistogramStat) = midpoints(o)
+Statistics.mean(o::WeightedHistogramStat) = mean(midpoints(o), fweights(counts(o)))
+Statistics.var(o::WeightedHistogramStat) = var(midpoints(o), fweights(counts(o)); corrected=true)
+Statistics.std(o::WeightedHistogramStat) = sqrt(var(o))
+Statistics.median(o::WeightedHistogramStat) = quantile(o, .5)
+
+function Base.show(io::IO, o::WeightedHistogramStat)
+    print(io, name(o, false, false), ": ")
+    print(io, "∑wᵢ=", nobs(o))
+    print(io, " | value=")
+    show(IOContext(io, :compact => true), value(o))
+end
+
+#-----------------------------------------------------------------------# WeightedHist 
+"""
+    WeightedHist(edges; left = true, closed = true)
+
+Create a histogram with bin partition defined by `edges`.
+- If `left`, the bins will be left-closed.
+- If `closed`, the bin on the end will be closed.
+    - E.g. for a two bin histogram ``[a, b), [b, c)`` vs. ``[a, b), [b, c]``
+# Example 
+    o = fit!(WeightedHist(-5:.1:5), randn(10^6))
+    
+    # approximate statistics 
+    using Statistics
+    mean(o)
+    var(o)
+    std(o)
+    quantile(o)
+    median(o)
+    extrema(o)
+"""
+struct WeightedHist{T, R} <: WeightedHistogramStat{T}
+    edges::R 
+    counts::Vector{Float64} 
+    out::Vector{Float64}
+    left::Bool
+    closed::Bool
+
+    function WeightedHist(edges::R, T::Type = eltype(edges); left::Bool=true, closed::Bool = true) where {R<:AbstractVector}           
+        new{T,R}(edges, zeros(Int, length(edges) - 1), [0,0], left, closed)
+    end
+end
+nobs(o::WeightedHist) = sum(o.counts) + sum(o.out)
+value(o::WeightedHist) = (x=o.edges, y=o.counts)
+
+midpoints(o::WeightedHist) = midpoints(o.edges)
+counts(o::WeightedHist) = o.counts
+edges(o::WeightedHist) = o.edges
+
+function Base.extrema(o::WeightedHist) 
+    x, y = midpoints(o), counts(o)
+    x[findfirst(x -> x > 0, y)], x[findlast(x -> x > 0, y)]
+end
+function Statistics.quantile(o::WeightedHist, p = [0, .25, .5, .75, 1]) 
+    x, y = midpoints(o), counts(o)
+    inds = findall(x -> x != 0, y) 
+    quantile(x[inds], fweights(y[inds]), p)
+end
+
+function area(o::WeightedHist) 
+    c = o.counts 
+    e = o.edges
+    if isa(e, AbstractRange)
+        return step(e) * sum(c)
+    else
+        return sum((e[i+1] - e[i]) * c[i] for i in 1:length(c))
+    end
+end
+
+function pdf(o::WeightedHist, y)
+    i = OnlineStats.binindex(o.edges, y, o.left, o.closed)
+    if i < 1 || i > length(o.counts)
+        return 0.0
+    else
+        return o.counts[i] / area(o)
+    end
+end
+
+function _fit!(o::WeightedHist, x, wt)
+    i = OnlineStats.binindex(o.edges, x, o.left, o.closed)
+    if 1 ≤ i < length(o.edges)
+        o.counts[i] += wt
+    else
+        o.out[1 + (i > 0)] += wt
+    end
+end
+
+function _merge!(o::WeightedHist, o2::WeightedHist) 
+    if o.edges == o2.edges 
+        for j in eachindex(o.counts)
+            o.counts[j] += o2.counts[j]
+        end
+    else
+        @warn("WeightedHistogram edges do not align.  Merging is approximate.")
+        for (yi, wi) in zip(midpoints(o2.edges), o2.counts)
+            for k in 1:wi 
+                _fit!(o, yi)
+            end
+        end
+    end
+end
+
+#-----------------------------------------------------------------------# Adaptive Hist
 abstract type WeightedHistAlgorithm{N} <: Algorithm end
 Base.show(io::IO, o::WeightedHistAlgorithm) = print(io, name(o, false, false))
 make_alg(o::WeightedHistAlgorithm) = o
 
-#-----------------------------------------------------------------------# Hist
 """
-    Weighted Historgram
+    Weighted Histogram
 
 Calculate a histogram of weighted data.
 
@@ -24,7 +129,7 @@ Calculate a histogram of weighted data.
     quantile(o, [0, 0.25, 0.5, 0.25, 1.0])
     extrema(o)
 """
-struct WeightedAdaptiveHist{N, H <: WeightedHistAlgorithm{N}} <: WeightedOnlineStat{N}
+struct WeightedAdaptiveHist{N, H <: WeightedHistAlgorithm{N}} <: WeightedHistogramStat{N}
     alg::H
     WeightedAdaptiveHist{H}(alg::H) where {N, H<:WeightedHistAlgorithm{N}} = new{N, H}(alg)
 end
@@ -46,11 +151,6 @@ function OnlineStatsBase.value(o::WeightedAdaptiveHist)
     (midpoints(o), counts(o))
 end
 
-split_candidates(o::WeightedAdaptiveHist) = midpoints(o)
-Statistics.mean(o::WeightedAdaptiveHist) = mean(midpoints(o), fweights(counts(o)))
-Statistics.var(o::WeightedAdaptiveHist) = var(midpoints(o), fweights(counts(o)); corrected=true)
-Statistics.std(o::WeightedAdaptiveHist) = sqrt(var(o))
-Statistics.median(o::WeightedAdaptiveHist) = quantile(o, .5)
 function Base.extrema(o::WeightedAdaptiveHist)
     mids, counts = value(o)
     inds = findall(x->x!=0, counts)  # filter out zero weights
@@ -60,13 +160,6 @@ function Statistics.quantile(o::WeightedAdaptiveHist, p = [0, .25, .5, .75, 1])
     mids, counts = value(o)
     inds = findall(x->x!=0, counts)  # filter out zero weights
     quantile(mids[inds], fweights(counts[inds]), p)
-end
-
-function Base.show(io::IO, o::WeightedAdaptiveHist)
-    print(io, name(o, false, false), ": ")
-    print(io, "∑wᵢ=", nobs(o))
-    print(io, " | value=")
-    show(IOContext(io, :compact => true), value(o))
 end
 
 function weightsum(o::WeightedAdaptiveHist)
