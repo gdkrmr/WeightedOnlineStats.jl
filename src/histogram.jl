@@ -49,6 +49,7 @@ struct WeightedHist{T, R} <: WeightedHistogramStat{T}
     end
 end
 nobs(o::WeightedHist) = sum(o.counts) + sum(o.out)
+weightsum(o::WeightedHist) = nobs(o)
 value(o::WeightedHist) = (x=o.edges, y=o.counts)
 
 midpoints(o::WeightedHist) = midpoints(o.edges)

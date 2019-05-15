@@ -1,3 +1,5 @@
+using Statistics
+import OnlineStats
 d1, w1 = fill(1, 40), fill(4, 40)
 d2, w2 = fill(2, 30), fill(3, 30)
 d3, w3 = fill(3, 20), fill(2, 20)
@@ -80,24 +82,52 @@ end
 end
 
 @testset "WeightedHist" begin
-    h = WeightedHist(-3:1:1)
+    @testset "fit!" begin
+        h = WeightedHist(-3:1:1)
 
-    fit!(h, -2.5,1.3)
-    @test h.counts == [1.3, 0,0,0]
+        fit!(h, -2.5,1.3)
+        @test h.counts == [1.3, 0,0,0]
 
-    fit!(h, (-2.1, 1.0))
-    @test h.counts == [2.3, 0,0,0]
+        fit!(h, (-2.1, 1.0))
+        @test h.counts == [2.3, 0,0,0]
 
-    fit!(h, (-20, 2.0))
-    @test h.counts == [2.3, 0,0,0]
-    @test h.out == [2.0, 0]
+        fit!(h, (-20, 2.0))
+        @test h.counts == [2.3, 0,0,0]
+        @test h.out == [2.0, 0]
 
-    fit!(h, 20, 1.7)
-    @test h.counts == [2.3, 0,0,0]
-    @test h.out == [2.0, 1.7]
+        fit!(h, 20, 1.7)
+        @test h.counts == [2.3, 0,0,0]
+        @test h.out == [2.0, 1.7]
 
-    fit!(h, -0.1, 1.1)
-    @test h.counts == [2.3, 0,1.1,0]
-    @test h.edges === -3:1:1
-    @test h.out == [2.0, 1.7]
+        fit!(h, -0.1, 1.1)
+        @test h.counts == [2.3, 0,1.1,0]
+        @test h.edges === -3:1:1
+        @test h.out == [2.0, 1.7]
+    end
+
+    @testset "merge!" begin
+        h1 = WeightedHist(-2:2:2)
+        fit!(h1, (-1, 5))
+        fit!(h1, (1, 10))
+        h1_copy = deepcopy(h1)
+        @test merge!(h1, WeightedHist([-2,0,2])) == h1_copy
+        @test merge!(h1_copy, h1).counts == [10, 20.]
+    end
+
+    @testset "stats" begin
+        h = WeightedHist(-2:2:2)
+        ho = OnlineStats.Hist(-2.:2:2)
+        for _ in 1:rand(1:20)
+            x = randn()
+            fit!(h, x, 1.0)
+            fit!(ho, x)
+        end
+        
+        @test mean(h) ≈ mean(ho)
+        @test std(h) ≈ std(ho)
+        @test median(h) ≈ median(ho)
+        @test nobs(h) ≈ nobs(ho)
+        @test var(h) ≈ var(ho)
+    end
+
 end
