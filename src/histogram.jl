@@ -1,5 +1,5 @@
 ##############################################################
- Using the code from  OnlineStats.jl/src/stats/hist.jl
+# Using the code from  OnlineStats.jl/src/stats/hist.jl
 # Modifying it to work with WeightedOnlineStats
 ##############################################################
 
