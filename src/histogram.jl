@@ -1,5 +1,5 @@
 ##############################################################
-# Using the code from  OnlineStats.jl/src/stats/hist.jl
+ Using the code from  OnlineStats.jl/src/stats/hist.jl
 # Modifying it to work with WeightedOnlineStats
 ##############################################################
 
@@ -17,7 +17,7 @@ function Base.show(io::IO, o::WeightedHistogramStat)
     show(IOContext(io, :compact => true), value(o))
 end
 
-#-----------------------------------------------------------------------# WeightedHist 
+#-----------------------------------------------------------------------# WeightedHist
 """
     WeightedHist(edges; left = true, closed = true)
 
@@ -25,10 +25,10 @@ Create a histogram with bin partition defined by `edges`.
 - If `left`, the bins will be left-closed.
 - If `closed`, the bin on the end will be closed.
     - E.g. for a two bin histogram ``[a, b), [b, c)`` vs. ``[a, b), [b, c]``
-# Example 
+# Example
     o = fit!(WeightedHist(-5:.1:5), randn(10^6))
-    
-    # approximate statistics 
+
+    # approximate statistics
     using Statistics
     mean(o)
     var(o)
@@ -36,15 +36,17 @@ Create a histogram with bin partition defined by `edges`.
     quantile(o)
     median(o)
     extrema(o)
+    area(o)
+    pdf(o)
 """
 struct WeightedHist{T, R} <: WeightedHistogramStat{T}
-    edges::R 
-    counts::Vector{Float64} 
+    edges::R
+    counts::Vector{Float64}
     out::Vector{Float64}
     left::Bool
     closed::Bool
 
-    function WeightedHist(edges::R, T::Type = eltype(edges); left::Bool=true, closed::Bool = true) where {R<:AbstractVector}           
+    function WeightedHist(edges::R, T::Type = eltype(edges); left::Bool=true, closed::Bool = true) where {R<:AbstractVector}
         new{T,R}(edges, zeros(Int, length(edges) - 1), [0,0], left, closed)
     end
 end
@@ -56,18 +58,18 @@ midpoints(o::WeightedHist) = midpoints(o.edges)
 counts(o::WeightedHist) = o.counts
 edges(o::WeightedHist) = o.edges
 
-function Base.extrema(o::WeightedHist) 
+function Base.extrema(o::WeightedHist)
     x, y = midpoints(o), counts(o)
     x[findfirst(x -> x > 0, y)], x[findlast(x -> x > 0, y)]
 end
-function Statistics.quantile(o::WeightedHist, p = [0, .25, .5, .75, 1]) 
+function Statistics.quantile(o::WeightedHist, p = [0, .25, .5, .75, 1])
     x, y = midpoints(o), counts(o)
-    inds = findall(x -> x != 0, y) 
+    inds = findall(x -> x != 0, y)
     quantile(x[inds], fweights(y[inds]), p)
 end
 
-function area(o::WeightedHist) 
-    c = o.counts 
+function area(o::WeightedHist)
+    c = o.counts
     e = o.edges
     if isa(e, AbstractRange)
         return step(e) * sum(c)
@@ -94,15 +96,15 @@ function _fit!(o::WeightedHist, x, wt)
     end
 end
 
-function _merge!(o::WeightedHist, o2::WeightedHist) 
-    if o.edges == o2.edges 
+function _merge!(o::WeightedHist, o2::WeightedHist)
+    if o.edges == o2.edges
         for j in eachindex(o.counts)
             o.counts[j] += o2.counts[j]
         end
     else
         @warn("WeightedHistogram edges do not align.  Merging is approximate.")
         for (yi, wi) in zip(midpoints(o2.edges), o2.counts)
-            for k in 1:wi 
+            for k in 1:wi
                 _fit!(o, yi)
             end
         end
