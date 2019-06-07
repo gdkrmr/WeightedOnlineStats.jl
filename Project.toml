@@ -1,7 +1,7 @@
 name = "WeightedOnlineStats"
 uuid = "bbac0a1f-7c9d-5672-960b-c6ca726e5d5d"
 authors = ["Guido Kraemer <gdkrmr@users.noreply.github.com>", "Martin Gutwin <twinGu@users.noreply.github.com>"]
-version = "0.3.0"
+version = "0.3.1"
 
 [compat]
 julia = "1"
