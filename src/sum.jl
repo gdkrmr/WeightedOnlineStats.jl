@@ -39,4 +39,4 @@ end
 
 OnlineStatsBase.value(o::WeightedSum) = o.∑
 Base.sum(o::WeightedSum) = value(o)
-Base.copy(o::WeightedSum) = WeightedSum(o.∑, o.W)
+Base.copy(o::WeightedSum) = WeightedSum(o.∑, o.W, o.n)
