@@ -1,5 +1,6 @@
 # `WeightedOnlineStats.jl`
 [![Build Status](https://travis-ci.org/gdkrmr/WeightedOnlineStats.jl.svg?branch=master)](https://travis-ci.org/gdkrmr/WeightedOnlineStats.jl)
+[![DOI](https://zenodo.org/badge/156201284.svg)](https://zenodo.org/badge/latestdoi/156201284)
 
 An extension of `OnlineStatsBase.jl` that supports proper statistical weighting
 and arbitrary numerical precision.
