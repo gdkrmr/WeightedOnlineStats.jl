@@ -1,5 +1,5 @@
 abstract type WeightedOnlineStat{T} <: OnlineStat{T} end
-using OnlineStats: fweights
+using OnlineStats: fweights, aweights
 
 meanweight(o::WeightedOnlineStat) = o.W
 weightsum(o::WeightedOnlineStat) = meanweight(o) * nobs(o)
