@@ -62,6 +62,12 @@
     @test o == oold
     fit!(o, [1, 2, 3, 4, 5], missing)
     @test o == oold
+
+    # issue #29
+    fit!(o, eachrow([missing 1 2 3 4;
+                     missing 2 3 4 5]),
+         [1.0, 1.0])
+    @test o == oold
 end
 
 @testset "WeightedCovMatrix merge!" begin
