@@ -126,7 +126,6 @@ end
             x = randn()
             fit!(h, x, 1.0)
             fit!(ho, x)
-            @show x, nobs(h), nobs(ho)
         end
         @test mean(h) ≈ mean(ho)
         @test std(h) ≈ std(ho)
