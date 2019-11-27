@@ -27,7 +27,12 @@ Create a histogram with bin partition defined by `edges`.
 - If `left`, the bins will be left-closed.
 - If `closed`, the bin on the end will be closed.
     - E.g. for a two bin histogram ``[a, b), [b, c)`` vs. ``[a, b), [b, c]``
-# Example
+
+If `edges` is a tuple instead of an array, a multidimensional histogram will be
+generated that behaves like a `WeightedOnlineStat{VectorOb}`.
+
+# Examples
+
     o = fit!(WeightedHist(-5:.1:5), randn(10^6))
 
     # approximate statistics
@@ -40,6 +45,11 @@ Create a histogram with bin partition defined by `edges`.
     extrema(o)
     area(o)
     pdf(o)
+
+## 2d Histogram
+
+    hist2d = fit!(WeightedHist((-5:1:5, -5:1:5) ), randn(10000,2), rand(10000))
+    value(hist2d).y
 """
 struct WeightedHist1D{R} <: WeightedHist{Float64}
     edges::R
@@ -76,6 +86,7 @@ end
 nobs(o::WeightedHist) = sum(o.counts) + sum(o.outcount)
 weightsum(o::WeightedHist) = LinearAlgebra.dot(o.counts, o.meanw) + LinearAlgebra.dot(o.outcount,o.meanwout)
 value(o::WeightedHist) = (x=edges(o), y=o.counts .* o.meanw)
+binindices(o::WeightedHistND{<:Any,N}, x::AbstractVector) where N = binindices(o, ntuple(i->x[i],N))
 binindices(o::WeightedHist1D,x) = OnlineStats.binindex(o.edges, x, o.left, o.closed)
 binindices(o::WeightedHistND,x) = CartesianIndex(map((e,ix)->OnlineStats.binindex(e, ix, o.left, o.closed), o.edges, x))
 midpoints(o::WeightedHistND) = Iterators.product(map(midpoints,o.edges)...)
