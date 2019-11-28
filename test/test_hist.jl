@@ -86,23 +86,28 @@ end
         h = WeightedHist(-3:1:1)
 
         fit!(h, -2.5,1.3)
-        @test h.counts == [1.3, 0,0,0]
+        @test h.counts == [1,0,0,0]
+        @test h.meanw  == [1.3,0,0,0]
 
         fit!(h, (-2.1, 1.0))
-        @test h.counts == [2.3, 0,0,0]
+        @test value(h).y == [2.3, 0,0,0]
+        @test h.counts == [2,0,0,0]
+        @test h.meanw == [1.15,0,0,0]
 
         fit!(h, (-20, 2.0))
-        @test h.counts == [2.3, 0,0,0]
-        @test h.out == [2.0, 0]
+        @test value(h).y == [2.3, 0,0,0]
+        @test h.outcount == [1, 0, 0]
+        @test h.meanwout == [2.0,0,0]
 
         fit!(h, 20, 1.7)
-        @test h.counts == [2.3, 0,0,0]
-        @test h.out == [2.0, 1.7]
+        @test value(h).y == [2.3, 0,0,0]
+        @test h.meanwout == [2.0, 0.0, 1.7]
+        @test h.outcount == [1, 0, 1]
+
 
         fit!(h, -0.1, 1.1)
-        @test h.counts == [2.3, 0,1.1,0]
+        @test value(h).y == [2.3, 0,1.1,0]
         @test h.edges === -3:1:1
-        @test h.out == [2.0, 1.7]
     end
 
     @testset "merge!" begin
@@ -111,7 +116,7 @@ end
         fit!(h1, (1, 10))
         h1_copy = deepcopy(h1)
         @test merge!(h1, WeightedHist([-2,0,2])) == h1_copy
-        @test merge!(h1_copy, h1).counts == [10, 20.]
+        @test value(merge!(h1_copy, h1)).y == [10, 20.]
     end
 
     @testset "stats" begin
@@ -122,12 +127,46 @@ end
             fit!(h, x, 1.0)
             fit!(ho, x)
         end
-        
         @test mean(h) ≈ mean(ho)
         @test std(h) ≈ std(ho)
         @test median(h) ≈ median(ho)
         @test nobs(h) ≈ nobs(ho)
         @test var(h) ≈ var(ho)
+        @test all(extrema(h) .≈ extrema(ho))
     end
+
+    @testset "N-dimensional Hist" begin
+      h = WeightedHist((-2:2:2,0:3:6))
+      fit!(h,(-1.5,1.5),1.5)
+      @test h.counts == [1 0; 0 0]
+      @test h.meanw  == [1.5 0; 0 0]
+
+      fit!(h,(-0.5,0.2),1.1)
+      @test h.counts == [2 0; 0 0]
+      @test h.meanw  == [1.3 0;0 0]
+
+      fit!(h,(-3.0,0.0),1.5)
+      @test h.counts == [2 0; 0 0]
+      @test h.meanw  == [1.3 0;0 0]
+      @test h.outcount == [0 1 0; 0 0 0; 0 0 0]
+
+      fit!(h,(-10,-10),1.1)
+      @test h.counts == [2 0; 0 0]
+      @test h.meanw  == [1.3 0;0 0]
+      @test h.outcount == [1 1 0; 0 0 0; 0 0 0]
+
+      fit!(h,(1.5,4.5),2.6)
+      @test h.counts == [2 0; 0 1]
+      @test h.meanw  == [1.3 0; 0 2.6]
+      @test value(h) == (x=(-2:2:2, 0:3:6),y=[2.6 0;0 2.6])
+
+      @test mean(h) == (0.0,3.0)
+      @test var(h)  == (1.2380952380952381, 2.785714285714286)
+      @test std(h)  == (1.1126972805283737, 1.6690459207925605)
+      @test median(h) == (-1.0, 1.5)
+      @test nobs(h) == 5
+      @test extrema(h) == ((-1,1),(1.5,4.5))
+    end
+
 
 end

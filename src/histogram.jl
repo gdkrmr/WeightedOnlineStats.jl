@@ -3,11 +3,13 @@
 # Modifying it to work with WeightedOnlineStats
 ##############################################################
 
+import LinearAlgebra
 abstract type WeightedHistogramStat{T} <: WeightedOnlineStat{T} end
+abstract type WeightedHist{T} <: WeightedHistogramStat{T} end
 split_candidates(o::WeightedHistogramStat) = midpoints(o)
 Statistics.mean(o::WeightedHistogramStat) = mean(midpoints(o), fweights(counts(o)))
 Statistics.var(o::WeightedHistogramStat) = var(midpoints(o), fweights(counts(o)); corrected=true)
-Statistics.std(o::WeightedHistogramStat) = sqrt(var(o))
+Statistics.std(o::WeightedHistogramStat) = sqrt.(var(o))
 Statistics.median(o::WeightedHistogramStat) = quantile(o, .5)
 
 function Base.show(io::IO, o::WeightedHistogramStat)
@@ -25,7 +27,12 @@ Create a histogram with bin partition defined by `edges`.
 - If `left`, the bins will be left-closed.
 - If `closed`, the bin on the end will be closed.
     - E.g. for a two bin histogram ``[a, b), [b, c)`` vs. ``[a, b), [b, c]``
-# Example
+
+If `edges` is a tuple instead of an array, a multidimensional histogram will be
+generated that behaves like a `WeightedOnlineStat{VectorOb}`.
+
+# Examples
+
     o = fit!(WeightedHist(-5:.1:5), randn(10^6))
 
     # approximate statistics
@@ -38,68 +45,152 @@ Create a histogram with bin partition defined by `edges`.
     extrema(o)
     area(o)
     pdf(o)
+
+## 2d Histogram
+
+    hist2d = fit!(WeightedHist((-5:1:5, -5:1:5) ), randn(10000,2), rand(10000))
+    value(hist2d).y
 """
-struct WeightedHist{T, R} <: WeightedHistogramStat{T}
+struct WeightedHist1D{R} <: WeightedHist{Float64}
     edges::R
-    counts::Vector{Float64}
-    out::Vector{Float64}
+    counts::Vector{Int}
+    meanw::Vector{Float64}
+    outcount::Vector{Int}
+    meanwout::Vector{Float64}
     left::Bool
     closed::Bool
+end
+struct WeightedHistND{R, N} <: WeightedHist{OnlineStats.VectorOb}
+    edges::R
+    counts::Array{Int,N}
+    meanw::Array{Float64,N}
+    outcount::Array{Int,N}
+    meanwout::Array{Float64,N}
+    left::Bool
+    closed::Bool
+end
 
-    function WeightedHist(edges::R, T::Type = eltype(edges); left::Bool=true, closed::Bool = true) where {R<:AbstractVector}
-        new{T,R}(edges, zeros(Int, length(edges) - 1), [0,0], left, closed)
+function WeightedHist(edges; left::Bool=true, closed::Bool = true)
+    edges = isa(edges,Tuple) ? edges : (edges,)
+    counts = zeros(Int, map(i->length(i)-1, edges))
+    meanw = zeros(Float64, map(i->length(i)-1, edges))
+    outcount = zeros(Int,ntuple(_->3,length(edges)))
+    meanwout = zeros(Float64,ntuple(_->3,length(edges)))
+    if length(edges) == 1
+      WeightedHist1D(edges[1],counts,meanw,outcount,meanwout,left,closed)
+    else
+      WeightedHistND{typeof(edges),length(edges)}(edges, counts, meanw,outcount,meanwout, left, closed)
     end
 end
-nobs(o::WeightedHist) = sum(o.counts) + sum(o.out)
-weightsum(o::WeightedHist) = nobs(o)
-value(o::WeightedHist) = (x=o.edges, y=o.counts)
-
-midpoints(o::WeightedHist) = midpoints(o.edges)
+# Special case for 1D Histogram
+nobs(o::WeightedHist) = sum(o.counts) + sum(o.outcount)
+weightsum(o::WeightedHist) = LinearAlgebra.dot(o.counts, o.meanw) + LinearAlgebra.dot(o.outcount,o.meanwout)
+value(o::WeightedHist) = (x=edges(o), y=o.counts .* o.meanw)
+binindices(o::WeightedHistND{<:Any,N}, x::AbstractVector) where N = binindices(o, ntuple(i->x[i],N))
+binindices(o::WeightedHist1D,x) = OnlineStats.binindex(o.edges, x, o.left, o.closed)
+binindices(o::WeightedHistND,x) = CartesianIndex(map((e,ix)->OnlineStats.binindex(e, ix, o.left, o.closed), o.edges, x))
+midpoints(o::WeightedHistND) = Iterators.product(map(midpoints,o.edges)...)
+midpoints(o::WeightedHist1D) = midpoints(edges(o))
 counts(o::WeightedHist) = o.counts
 edges(o::WeightedHist) = o.edges
-
-function Base.extrema(o::WeightedHist)
-    x, y = midpoints(o), counts(o)
-    x[findfirst(x -> x > 0, y)], x[findlast(x -> x > 0, y)]
+function Statistics.mean(o::WeightedHist)
+  weights = value(o).y
+  N = ndims(o.counts)
+  r = ntuple(N) do idim
+    a = map(i->i[idim],midpoints(o))
+    mean(a,fweights(weights))
+  end
+  N==1 ? r[1] : r
 end
+function Statistics.var(o::WeightedHist)
+  weights = value(o).y
+  N = ndims(o.counts)
+  r = ntuple(N) do idim
+    a = map(i->i[idim],midpoints(o))
+    var(a,fweights(weights),corrected=true)
+  end
+  N==1 ? r[1] : r
+end
+Statistics.std(o::WeightedHist) = sqrt.(var(o))
+Statistics.median(o::WeightedHist) = quantile(o, .5)
+
+function Base.extrema(o::WeightedHist1D)
+    x, y = midpoints(o), counts(o)
+    x[findfirst(!iszero,y)],x[findlast(!iszero,y)]
+end
+function Base.extrema(o::WeightedHistND{<:Any,N}) where N
+    x, y = midpoints(o), counts(o)
+    ntuple(N) do idim
+      avalue = any(!iszero, y, dims = setdiff(1:N,idim))[:]
+      x.iterators[idim][findfirst(avalue)],x.iterators[idim][findlast(avalue)]
+    end
+end
+
 function Statistics.quantile(o::WeightedHist, p = [0, .25, .5, .75, 1])
     x, y = midpoints(o), counts(o)
-    inds = findall(x -> x != 0, y)
-    quantile(x[inds], fweights(y[inds]), p)
+    N = ndims(y)
+    inds = findall(!iszero, y)
+    yweights = fweights(y[inds])
+    subset = collect(x)[inds]
+    r = ntuple(N) do idim
+      data = map(i->i[idim],subset)
+      quantile(data, fweights(y[inds]), p)
+    end
+    if N==1
+      return r[1]
+    else
+      return r
+    end
 end
 
 function area(o::WeightedHist)
     c = o.counts
     e = o.edges
-    if isa(e, AbstractRange)
-        return step(e) * sum(c)
-    else
-        return sum((e[i+1] - e[i]) * c[i] for i in 1:length(c))
+    return mapreduce(+, CartesianIndices(c)) do I
+      ar = prod(map((ed,i)->ed[i+1]-ed[i],e,I.I))
+      c[I]*ar
     end
 end
 
+outindex(o, ci::CartesianIndex) = CartesianIndex(map((i,l)->i < 1 ? 1 : i > l ? 3 : 2, ci.I, size(o.counts)))
+outindex(o, ci::Int) = CartesianIndex(ci < 1 ? 1 : ci > length(o.counts) ? 3 : 2)
 function pdf(o::WeightedHist, y)
-    i = OnlineStats.binindex(o.edges, y, o.left, o.closed)
-    if i < 1 || i > length(o.counts)
-        return 0.0
+    ci = binindices(o, y)
+    if all(isequal(2),outindex(o,ci).I)
+        return o.counts[ci]*o.meanw[ci] / area(o) / weightsum(o)
     else
-        return o.counts[i] / area(o)
+        return 0.0
     end
 end
 
 function _fit!(o::WeightedHist, x, wt)
-    i = OnlineStats.binindex(o.edges, x, o.left, o.closed)
-    if 1 ≤ i < length(o.edges)
-        o.counts[i] += wt
+    #length(x) == N || error("You must provide $(N) values for the histogram")
+    ci = binindices(o, x)
+    oi = outindex(o,ci)
+    if all(isequal(2),oi.I)
+        o.counts[ci] += 1
+        o.meanw[ci] = smooth(o.meanw[ci], wt, 1.0 / o.counts[ci])
     else
-        o.out[1 + (i > 0)] += wt
+        o.outcount[oi] += 1
+        o.meanwout[oi] = smooth(o.meanwout[oi], wt, 1.0 / o.outcount[oi])
     end
 end
 
 function _merge!(o::WeightedHist, o2::WeightedHist)
     if o.edges == o2.edges
         for j in eachindex(o.counts)
-            o.counts[j] += o2.counts[j]
+            newcount = o.counts[j] + o2.counts[j]
+            if newcount > 0
+              o.meanw[j] = (o.meanw[j]*o.counts[j] + o2.meanw[j]*o2.counts[j])/newcount
+            end
+            o.counts[j] = newcount
+        end
+        for j in eachindex(o.outcount)
+          newcount = o.outcount[j] + o2.outcount[j]
+          if newcount > 0
+            o.meanwout[j] = (o.meanwout[j]*o.outcount[j] + o2.meanwout[j]*o2.outcount[j])/newcount
+          end
+          o.outcount[j] = newcount
         end
     else
         @warn("WeightedHistogram edges do not align.  Merging is approximate.")
