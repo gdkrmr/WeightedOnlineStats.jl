@@ -67,7 +67,8 @@ function _fit!(o::WeightedCovMatrix{T}, x, w) where T
     smooth_syr!(o.A, xx, γ2)
 end
 
-function _fit!(o::WeightedCovMatrix{T1}, x::Vector{Union{T2, Missing}}, w) where {T1, T2}
+function _fit!(o::WeightedCovMatrix{T1},
+               x::AbstractVector{Union{T2, Missing}}, w) where {T1, T2}
     if !mapreduce(ismissing, |, x)
         xx = convert(Vector{T1}, x)
         _fit!(o, xx, w)
