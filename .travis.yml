@@ -20,4 +20,5 @@ matrix:
     - julia: nightly
 
 after_success:
-  - julia -e 'cd(Pkg.dir("WeightedOnlineStats")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+  - julia --project=test/coverage -e 'using Pkg; Pkg.instantiate()'
+  - julia --project=test/coverage test/coverage/coverage.jl
