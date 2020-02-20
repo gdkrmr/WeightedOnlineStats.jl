@@ -14,10 +14,10 @@ values = rand(100)
 weights = rand(100)
 
 # fit using arrays:
-o1 = fit!(WeightedMean, values, weights)
+o1 = fit!(WeightedMean(), values, weights)
 
 # fit using an iterator that returns a tuple (value, weight):
-o2 = fit!(WeightedMean, zip(values, weights))
+o2 = fit!(WeightedMean(), zip(values, weights))
 
 # fit single values at a time:
 o3 = WeightedMean()
