@@ -12,15 +12,15 @@ end
 
     x = rand(100, 4)
     w = ones(100)
-    zsm = fit(ZScoreTransform, x')
-    zm = fit(ZScoreTransform, x', scale = false)
+    zsm = fit(ZScoreTransform, x, dims = 1)
+    zm = fit(ZScoreTransform, x, scale = false, dims = 1)
 
     c = fit!(WeightedCovMatrix(), x, w)
 
     t, p = pca(c, cov_pca = true)
     p6 = fit(
         PCA,
-        StatsBase.transform(zm, permutedims(x)),
+        StatsBase.transform(zm, x)',
         method = :cov,
         maxoutdim = 4,
         pratio = 1.0,
@@ -37,7 +37,7 @@ end
     t, p = pca(c, cov_pca = false)
     p4 = fit(
         PCA,
-        StatsBase.transform(zsm, x'),
+        StatsBase.transform(zsm, x)',
         method = :cov,
         maxoutdim = 4,
         pratio = 1.0,

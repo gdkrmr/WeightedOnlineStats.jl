@@ -49,7 +49,7 @@ function pca(
         T[] :
         std(x, corrected = correct, weight_type = weight_type)
 
-    t = ZScoreTransform(d, m, s)
+    t = ZScoreTransform(d, 1, m, s)
     p = MultivariateStats.pcacov(c, T[], maxoutdim = maxoutdim, pratio = pratio)
 
     return t, p
