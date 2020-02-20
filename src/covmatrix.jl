@@ -49,7 +49,11 @@ WeightedCovMatrix(::Type{T}, p::Int=0) where T =
 WeightedCovMatrix() = WeightedCovMatrix(Float64)
 
 function _fit!(o::WeightedCovMatrix{T}, x, w) where T
-    xx = convert(Vector{T}, x)
+    if eltype(x) != T
+        xx = convert(Array{T}, x)
+    else
+        xx = x
+    end
     ww = convert(T, w)
 
     o.n += 1
