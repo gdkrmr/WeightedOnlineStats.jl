@@ -1,7 +1,7 @@
 @testset "WeightedCovMatrix fit!" begin
     s, m, c = (map(x -> sum(x .* w), eachcol(x2)),
                map(x -> mean(x, weights(w)), eachcol(x2)),
-               cov(x2, weights(w), corrected = false))
+               cov(x2, aweights(w), corrected = true))
     ma, ca = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, aweights(w), corrected = true)
     mf, cf = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, fweights(w), corrected = true)
     mp, cp = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, pweights(w), corrected = true)
@@ -71,7 +71,7 @@
 end
 
 @testset "WeightedCovMatrix merge!" begin
-    c = cov(x2, weights(w), corrected = false)
+    c = cov(x2, aweights(w), corrected = true)
 
     wc = fit!(WeightedCovMatrix(), x2, w)
     oc = map(eachrow(x2), w) do xi, wi

@@ -124,7 +124,7 @@ function OnlineStatsBase.value(o::WeightedCovMatrix)
     o.C
 end
 
-function Statistics.cov(o::WeightedCovMatrix; corrected = false, weight_type = :analytic)
+function Statistics.cov(o::WeightedCovMatrix; corrected = true, weight_type = :analytic)
     if corrected
         if weight_type == :analytic
             LinearAlgebra.rmul!(

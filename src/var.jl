@@ -99,7 +99,7 @@ Base.sum(o::WeightedVariance) = mean(o) * meanweight(o) * nobs(o)
 Statistics.mean(o::WeightedVariance) = o.μ
 function Statistics.var(
         o::WeightedVariance;
-        corrected = false,
+        corrected = true,
         weight_type = :analytic
     )
     if corrected

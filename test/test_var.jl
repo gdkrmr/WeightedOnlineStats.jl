@@ -2,28 +2,26 @@
     test_fit(WeightedVariance{Float64},
              x, w,
              x -> (var(x), mean(x)),
-             (x, w) -> (var(x, weights(w), corrected = false), mean(x, weights(w))))
+             (x, w) -> (var(x, aweights(w), corrected = true), mean(x, weights(w))))
     test_fit(WeightedVariance{Float32},
              x, w,
              x -> (var(x), mean(x)),
-             (x, w) -> (var(x, weights(w), corrected = false), mean(x, weights(w))))
+             (x, w) -> (var(x, aweights(w), corrected = true), mean(x, weights(w))))
 
     test_fit(WeightedVariance{Float64},
              xmis, wmis,
-             x -> (var(x, corrected = false), mean(x)),
-             ## I dont know why this version has numerical issues, in my opinion
-             ## this should be the "more" correct one:
-             # (x, w) -> begin x = # missing_to_nan(x[1:end-2])
-             # w = missing_to_nan(w[1:end-2])
-             # (var(x[1:end-2], weights(w[1:end-2]), corrected = false),
-             # mean(x[1:end-2], weights(w[1:end-2]))) end
+             x -> (var(x), mean(x)),
              (x, w) -> begin
-             m = sum(skipmissing(x .* w)) / sum(skipmissing(w))
-             v = sum(skipmissing(w .* ((x .- m) .^ 2))) / sum(skipmissing(w))
-             (v, m)
-             end)
+                ## doesn't work:
+                # idx = findall((x) -> !ismissing(x[1]) & !ismissing(x[2]), zip(x, w))
+                idx = findall(.!ismissing(x) .& .!ismissing.(w))
+                xx = Float64.(x[idx])
+                ww = Float64.(w[idx])
+                (var(xx, aweights(ww), corrected = true), mean(xx, aweights(ww)))
+             end
+             )
 
-    s, m, v = sum(x .* w), mean(x, weights(w)), var(x, weights(w), corrected = false)
+    s, m, v = sum(x .* w), mean(x, weights(w)), var(x, aweights(w), corrected = true)
     sa, ma, va = sum(x .* w), mean(x, weights(w)), var(x, aweights(w), corrected = true)
     sf, mf, vf = sum(x .* w), mean(x, weights(w)), var(x, fweights(w), corrected = true)
     sp, mp, vp = sum(x .* w), mean(x, weights(w)), var(x, pweights(w), corrected = true)
@@ -60,7 +58,7 @@
 end
 
 @testset "WeighedVariance merge!" begin
-    v = var(x, weights(w), corrected = false)
+    v = var(x, aweights(w), corrected = true)
 
     wv = fit!(WeightedVariance(), x, w)
     ov = map(x, w) do xi, wi
