@@ -1,4 +1,5 @@
 # `WeightedOnlineStats.jl`
+![Run tests](https://github.com/gdkrmr/WeightedOnlineStats.jl/workflows/Run%20tests/badge.svg?branch=master)
 [![Build Status](https://travis-ci.org/gdkrmr/WeightedOnlineStats.jl.svg?branch=master)](https://travis-ci.org/gdkrmr/WeightedOnlineStats.jl)
 [![DOI](https://zenodo.org/badge/156201284.svg)](https://zenodo.org/badge/latestdoi/156201284)
 [![codecov.io](http://codecov.io/github/gdkrmr/WeightedOnlineStats.jl/coverage.svg?branch=master)](http://codecov.io/github/gdkrmr/WeightedOnlineStats.jl?branch=master)
