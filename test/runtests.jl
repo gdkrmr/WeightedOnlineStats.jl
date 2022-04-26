@@ -13,7 +13,7 @@ using Random
 using MultivariateStats
 
 
-Random.seed!(123)
+Random.seed!(124)
 l = 1000
 x = rand(l);
 xmis = convert(Array{Union{Float64, Missing}}, x);

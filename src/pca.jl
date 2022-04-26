@@ -5,7 +5,8 @@ export ZScoreTransform
 import MultivariateStats
 import MultivariateStats:
     PCA, pcacov, indim, outdim, projection, principalvar, principalvars,
-    tprincipalvar, tresidualvar, tvar, principalratio, transform, reconstruct
+    tprincipalvar, tresidualvar, tvar, principalratio, transform, reconstruct,
+    predict
 
 export
     pca, PCA, pcacov, indim, outdim, projection, principalvar, principalvars,
@@ -25,20 +26,17 @@ from a `WeightedCovMatrix`.
 - `weight_type::Symbol`: The type of weight for the correction, see the documentation of weights in `StatsBase.jl` for details. Ignored if `correct` is `false`.
 
 # Example
-    c = fit!(WeightedCovMatrix(), rand(100, 4), rand(100))
+    c = fit!(WeightedCovMatrix(), rand(4, 100), rand(100))
     t, p = pca(c)
-    # note that for prediction/reconstruction with the `PCA` object, the observations are in columns!
-    transform((t, p), rand(4, 100))
-    reconstruct(p, t), rand(4, 100))
 """
 function pca(
-        x           :: WeightedCovMatrix{T};
-        cov_pca     :: Bool          = false,
-        maxoutdim   :: Int           = size(x, 1),
-        pratio      :: AbstractFloat = 1.0,
-        correct     :: Bool          = false,
-        weight_type :: Symbol        = :analytic
-    ) where T
+    x::WeightedCovMatrix{T};
+    cov_pca::Bool = false,
+    maxoutdim::Int = size(x, 1),
+    pratio::AbstractFloat = 1.0,
+    correct::Bool = false,
+    weight_type::Symbol = :analytic
+) where {T}
 
     d = size(x, 1)
     c = cov_pca ?
@@ -49,38 +47,41 @@ function pca(
         T[] :
         std(x, corrected = correct, weight_type = weight_type)
 
-    t = ZScoreTransform(d, 1, m, s)
+    t = ZScoreTransform(d, 2, m, s)
     p = MultivariateStats.pcacov(c, T[], maxoutdim = maxoutdim, pratio = pratio)
 
     return t, p
 end
 
-function transform(t::Tuple{ZScoreTransform, PCA}, x)
-    xz = StatsBase.transform(t[1], x)
-    transform(t[2], xz)
-end
+# This is type piracy trying to resolve this here: https://github.com/JuliaStats/StatsBase.jl/issues/781
 
-function reconstruct(t::Tuple{PCA, ZScoreTransform}, x)
-    xz = reconstruct(t[1], x)
-    StatsBase.reconstruct(t[2], xz)
-end
+# function StatsBase.transform(t::Tuple{ZScoreTransform, PCA}, x)
+#     xz = StatsBase.transform(t[1], x)
+#     StatsBase.transform(t[2], xz)
+# end
 
-transform(t::Tuple{}, x) = x
-transform(t::Tuple{T}, x) where T = transform(t, x)
-function transform(t::Tuple, x)
-    xt = transform(x[1])
-    for i in 2:length(t)
-        xt = transform(t[i], xt)
-    end
-    xt
-end
+# function StatsBase.reconstruct(t::Tuple{PCA, ZScoreTransform}, x)
+#     xz = StatsBase.reconstruct(t[1], x)
+#     StatsBase.reconstruct(t[2], xz)
+# end
+# StatsBase.transform(t::MultivariateStats.PCA, x) = MultivariateStats.predict(t, x)
+# StatsBase.reconstruct(t::MultivariateStats.PCA, x) = MultivariateStats.reconstruct(t, x)
 
-reconstruct(t::Tuple{}, x) = x
-reconstruct(t::Tuple{T}, x) where T = reconstruct(t, x)
-function reconstruct(t::Tuple, x)
-    xt = reconstruct(x[1])
-    for i in 2:length(t)
-        xt = reconstruct(t[i], xt)
-    end
-    xt
-end
+# function StatsBase.transform(t::Union{Tuple, Array}, x)
+#     # y is typeunstable, probably doesn't matter
+#     y = x
+#     for tt in t
+#         y = StatsBase.transform(tt, y)
+#     end
+#     return y
+# end
+
+# function StatsBase.reconstruct(t::Union{Tuple,Array}, y)
+#     # x is typeunstable, probably doesn't matter
+#     x = y
+#     for tt in t
+#         x = StatsBase.reconstruct(tt, x)
+#     end
+#     return x
+# end
+

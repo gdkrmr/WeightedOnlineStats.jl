@@ -3,7 +3,7 @@
     test_fit(WeightedMean{Float32}, x, w, mean, (x, w) -> mean(x, weights(w)))
 
     test_fit(WeightedMean{Float64}, xmis, wmis, mean,
-             (x, w) -> sum(skipmissing(x .* w)) / sum(skipmissing(w)))
+        (x, w) -> sum(skipmissing(x .* w)) / sum(skipmissing(w)))
 
     m = mean(x, weights(w))
     s = sum(broadcast(*, w, x))
@@ -33,22 +33,21 @@ end
 
     om = map(x, w) do xi, wi
         fit!(WeightedMean(), xi, wi)
-    end;
-
+    end
     rm = reduce(merge!, om) |> mean
-    rm2 = merge!(
-        fit!(WeightedMean(), x[1:end ÷ 2], w[1:end ÷ 2]),
-        fit!(WeightedMean(), x[end ÷ 2 + 1:end], w[end ÷ 2 + 1:end])
-    ) |> mean
-
     rm_32 = reduce(merge!, om, init = WeightedMean(Float32)) |> mean
+
+    rm2 = merge!(
+        fit!(WeightedMean(), x[1:end÷2], w[1:end÷2]),
+        fit!(WeightedMean(), x[end÷2+1:end], w[end÷2+1:end])
+    ) |> mean
     rm2_32 = merge!(
-        fit!(WeightedMean(Float32), x[1:end ÷ 2], w[1:end ÷ 2]),
-        fit!(WeightedMean(), x[end ÷ 2 + 1:end], w[end ÷ 2 + 1:end])
+        fit!(WeightedMean(Float32), x[1:end÷2], w[1:end÷2]),
+        fit!(WeightedMean(), x[end÷2+1:end], w[end÷2+1:end])
     ) |> mean
 
+    @test wm ≈ m
     @test rm ≈ m
-    @test rm ≈ wm
     @test rm2 ≈ m
     @test rm_32 ≈ m
     @test rm2_32 ≈ m
