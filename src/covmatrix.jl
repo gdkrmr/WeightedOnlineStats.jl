@@ -6,7 +6,8 @@ Weighted covariance matrix, tracked as a matrix of type `T`.
 *After* a call to `cov` the covariance matrix is stored in `o.C`.
 
 # Example:
-    o = fit!(WeightedCovMatrix(), rand(100, 4), rand(100))
+    o = fit!(WeightedCovMatrix(), rand(100, 4) |> eachrow, rand(100))
+    o = fit!(WeightedCovMatrix(), rand(4, 100) |> eachcol, rand(100))
     sum(o)
     mean(o)
     var(o)
@@ -22,33 +23,33 @@ mutable struct WeightedCovMatrix{T} <: WeightedOnlineStat{VectorOb}
     W2::T
     n::Int
     function WeightedCovMatrix{T}(
-            C = zeros(T, 0, 0),
-            A = zeros(T, 0, 0),
-            b = zeros(T, 0),
-            W = T(0),
-            W2 = T(0),
-            n = 0
-        ) where T
+        C = zeros(T, 0, 0),
+        A = zeros(T, 0, 0),
+        b = zeros(T, 0),
+        W = T(0),
+        W2 = T(0),
+        n = 0
+    ) where {T}
         new{T}(C, A, b, W, W2, n)
     end
 end
 
 function WeightedCovMatrix(
-        C::Matrix{T},
-        A::Matrix{T},
-        b::Vector{T},
-        W::T,
-        W2::T,
-        n::Int
-    ) where T
+    C::Matrix{T},
+    A::Matrix{T},
+    b::Vector{T},
+    W::T,
+    W2::T,
+    n::Int
+) where {T}
     WeightedCovMatrix{T}(C, A, b, W, W2, n)
 end
 
-WeightedCovMatrix(::Type{T}, p::Int=0) where T =
+WeightedCovMatrix(::Type{T}, p::Int = 0) where {T} =
     WeightedCovMatrix(zeros(T, p, p), zeros(T, p, p), zeros(T, p), T(0), T(0), 0)
 WeightedCovMatrix() = WeightedCovMatrix(Float64)
 
-function _fit!(o::WeightedCovMatrix{T}, x, w) where T
+function _fit!(o::WeightedCovMatrix{T}, x, w) where {T}
     if eltype(x) != T
         xx = convert(Array{T}, x)
     else
@@ -59,7 +60,7 @@ function _fit!(o::WeightedCovMatrix{T}, x, w) where T
     o.n += 1
     γ1 = T(1) / o.n
     o.W = smooth(o.W, ww, γ1)
-    o.W2 = smooth(o.W2, ww*ww, γ1)
+    o.W2 = smooth(o.W2, ww * ww, γ1)
     γ2 = ww / (o.W * o.n)
     if isempty(o.A)
         p = length(xx)
@@ -72,7 +73,7 @@ function _fit!(o::WeightedCovMatrix{T}, x, w) where T
 end
 
 function _fit!(o::WeightedCovMatrix{T1},
-               x::AbstractVector{Union{T2, Missing}}, w) where {T1, T2}
+    x::AbstractVector{Union{T2,Missing}}, w) where {T1,T2}
     if !mapreduce(ismissing, |, x)
         xx = convert(Vector{T1}, x)
         _fit!(o, xx, w)
@@ -81,7 +82,7 @@ function _fit!(o::WeightedCovMatrix{T1},
 end
 _fit!(o::WeightedCovMatrix, x, w::Missing) = o
 
-function _merge!(o::WeightedCovMatrix{T}, o2::WeightedCovMatrix) where T
+function _merge!(o::WeightedCovMatrix{T}, o2::WeightedCovMatrix) where {T}
     o2_A = convert(Matrix{T}, o2.A)
     o2_b = convert(Vector{T}, o2.b)
     o2_W = convert(T, o2.W)
@@ -128,7 +129,7 @@ function Statistics.cov(o::WeightedCovMatrix; corrected = true, weight_type = :a
     if corrected
         if weight_type == :analytic
             LinearAlgebra.rmul!(
-                value(o), 1 / (1 - (o.W2 * nobs(o)) / (weightsum(o) ^ 2))
+                value(o), 1 / (1 - (o.W2 * nobs(o)) / (weightsum(o)^2))
             )
         elseif weight_type == :frequency
             LinearAlgebra.rmul!(
@@ -156,7 +157,7 @@ Statistics.mean(o::WeightedCovMatrix) = copy(o.b)
 Statistics.var(o::WeightedCovMatrix; kw...) = diag(cov(o; kw...))
 Statistics.std(o::WeightedCovMatrix; kw...) = sqrt.(var(o; kw...))
 
-Base.eltype(o::WeightedCovMatrix{T}) where T = T
+Base.eltype(o::WeightedCovMatrix{T}) where {T} = T
 Base.copy(o::WeightedCovMatrix) =
     WeightedCovMatrix(copy(o.C), copy(o.A), copy(o.b), o.W, o.W2, o.n)
 
@@ -164,13 +165,13 @@ Base.size(x::WeightedCovMatrix, i) = size(x.C, i)
 Base.size(x::WeightedCovMatrix) = size(x.C)
 
 
-function Base.convert(::Type{WeightedCovMatrix{T}}, o::WeightedCovMatrix) where T
+function Base.convert(::Type{WeightedCovMatrix{T}}, o::WeightedCovMatrix) where {T}
     WeightedCovMatrix{T}(
         convert(Matrix{T}, o.C),
         convert(Matrix{T}, o.A),
         convert(Vector{T}, o.b),
-        convert(T,         o.W),
-        convert(T,         o.W2),
+        convert(T, o.W),
+        convert(T, o.W2),
         o.n
     )
 end

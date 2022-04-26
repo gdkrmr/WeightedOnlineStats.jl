@@ -1,43 +1,49 @@
 @testset "WeightedCovMatrix fit!" begin
     s, m, c = (map(x -> sum(x .* w), eachcol(x2)),
-               map(x -> mean(x, weights(w)), eachcol(x2)),
-               cov(x2, aweights(w), corrected = true))
+        map(x -> mean(x, weights(w)), eachcol(x2)),
+        cov(x2, aweights(w), corrected = true))
     ma, ca = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, aweights(w), corrected = true)
     mf, cf = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, fweights(w), corrected = true)
     mp, cp = map(x -> mean(x, weights(w)), eachcol(x2)), cov(x2, pweights(w), corrected = true)
 
     o = WeightedCovMatrix()
     for i in 1:l
-        fit!(o, x2[i,:], w[i])
+        fit!(o, x2[i, :], w[i])
     end
     o
     sfor, mfor, cfor = sum(o), mean(o), cov(o)
 
     o_32 = WeightedCovMatrix(Float32)
     for i in 1:l
-        fit!(o_32, x2[i,:], w[i])
+        fit!(o_32, x2[i, :], w[i])
     end
     o_32
     sfor_32, mfor_32, cfor_32 = sum(o_32), mean(o_32), cov(o_32)
 
-    sval, mval, cval = fit!(WeightedCovMatrix(), x2, w) |> x -> (sum(x), mean(x), cov(x))
-    szip, mzip, czip = fit!(WeightedCovMatrix(), zip(eachrow(x2), w)) |> x -> (sum(x), mean(x), cov(x))
+    sval, mval, cval = fit!(WeightedCovMatrix(), x2, w) |>
+                       x -> (sum(x), mean(x), cov(x))
+    svalt, mvalt, cvalt = fit!(WeightedCovMatrix(), eachcol(permutedims(x2)), w) |>
+                          x -> (sum(x), mean(x), cov(x))
+    szip, mzip, czip = fit!(WeightedCovMatrix(), zip(eachrow(x2), w)) |>
+                       x -> (sum(x), mean(x), cov(x))
 
     mvala, cvala = fit!(WeightedCovMatrix(), x2, w) |>
-        x -> (mean(x), cov(x, corrected = true, weight_type = :analytic))
+                   x -> (mean(x), cov(x, corrected = true, weight_type = :analytic))
     mvalf, cvalf = fit!(WeightedCovMatrix(), x2, w) |>
-        x -> (mean(x), cov(x, corrected = true, weight_type = :frequency))
+                   x -> (mean(x), cov(x, corrected = true, weight_type = :frequency))
     @test_throws ArgumentError fit!(WeightedCovMatrix(), x2, w) |>
-        x -> (mean(x), cov(x, corrected = true, weight_type = :something))
+                               x -> (mean(x), cov(x, corrected = true, weight_type = :something))
 
     @test c ≈ czip
     @test c ≈ cfor
     @test c ≈ cfor_32
     @test c ≈ cval
+    @test c ≈ cvalt
     @test m ≈ mzip
     @test m ≈ mfor
     @test m ≈ mfor_32
     @test m ≈ mval
+    @test m ≈ mvalt
     @test ca ≈ cvala
     @test cf ≈ cvalf
     @test ma ≈ mvala
@@ -46,11 +52,12 @@
     @test s ≈ sfor
     @test s ≈ sfor_32
     @test s ≈ sval
+    @test s ≈ svalt
     @test s ≈ szip
 
     # After implementing :probability, these should pass/not throw any more:
     @test_throws ErrorException mvalp, vvalp = fit!(WeightedCovMatrix(), x2, w) |>
-        x -> (mean(x), cov(x, corrected = true, weight_type = :probability))
+                                               x -> (mean(x), cov(x, corrected = true, weight_type = :probability))
     @test_broken vp ≈ vvalp
     @test_broken mp ≈ mvalp
 
@@ -64,9 +71,9 @@
     @test o == oold
 
     # issue #29
-    fit!(o, eachrow([missing 1 2 3 4;
-                     missing 2 3 4 5]),
-         [1.0, 1.0])
+    fit!(o, eachrow([missing 1 2 3 4
+            missing 2 3 4 5]),
+        [1.0, 1.0])
     @test o == oold
 end
 
@@ -76,16 +83,16 @@ end
     wc = fit!(WeightedCovMatrix(), x2, w)
     oc = map(eachrow(x2), w) do xi, wi
         fit!(WeightedCovMatrix(), xi, wi)
-    end;
+    end
     rc = reduce(merge!, deepcopy(oc))
     rc2 = merge!(
-        fit!(WeightedCovMatrix(), x2[1:end ÷ 2, :],       w[1:end ÷ 2]),
-        fit!(WeightedCovMatrix(), x2[end ÷ 2 + 1:end, :], w[end ÷ 2 + 1:end]))
+        fit!(WeightedCovMatrix(), x2[1:end÷2, :], w[1:end÷2]),
+        fit!(WeightedCovMatrix(), x2[end÷2+1:end, :], w[end÷2+1:end]))
 
     rc_32 = reduce(merge!, deepcopy(oc), init = WeightedCovMatrix(Float32))
     rc2_32 = merge!(
-        fit!(WeightedCovMatrix(Float32), x2[1:end ÷ 2, :],       w[1:end ÷ 2]),
-        fit!(WeightedCovMatrix(),        x2[end ÷ 2 + 1:end, :], w[end ÷ 2 + 1:end]))
+        fit!(WeightedCovMatrix(Float32), x2[1:end÷2, :], w[1:end÷2]),
+        fit!(WeightedCovMatrix(), x2[end÷2+1:end, :], w[end÷2+1:end]))
 
     @test rc.b ≈ wc.b
     @test rc.C ≈ wc.C
@@ -143,9 +150,9 @@ end
     @test WeightedCovMatrix{Float64}() == WeightedCovMatrix()
     @test WeightedCovMatrix{Float32}() == WeightedCovMatrix(Float32)
     @test WeightedCovMatrix() == WeightedCovMatrix(zeros(Float64, 0, 0),
-                                                   zeros(Float64, 0, 0),
-                                                   zeros(Float64, 0),
-                                                   0.0, 0.0, 0)
+        zeros(Float64, 0, 0),
+        zeros(Float64, 0),
+        0.0, 0.0, 0)
     @test convert(WeightedCovMatrix{Float32}, WeightedCovMatrix()) ==
-        WeightedCovMatrix{Float32}()
+          WeightedCovMatrix{Float32}()
 end
