@@ -10,14 +10,12 @@
     for i in 1:l
         fit!(o, x2[i, :], w[i])
     end
-    o
     sfor, mfor, cfor = sum(o), mean(o), cov(o)
 
     o_32 = WeightedCovMatrix(Float32)
     for i in 1:l
         fit!(o_32, x2[i, :], w[i])
     end
-    o_32
     sfor_32, mfor_32, cfor_32 = sum(o_32), mean(o_32), cov(o_32)
 
     sval, mval, cval = fit!(WeightedCovMatrix(), x2, w) |>
@@ -96,11 +94,13 @@ end
 
     @test rc.b ≈ wc.b
     @test rc.C ≈ wc.C
+    @test rc.A ≈ wc.A
     @test rc.W ≈ wc.W
     @test rc.W2 ≈ wc.W2
 
     @test rc2.b ≈ wc.b
     @test rc2.C ≈ wc.C
+    @test rc2.A ≈ wc.A
     @test rc2.W ≈ wc.W
     @test rc2.W2 ≈ wc.W2
 
@@ -109,11 +109,13 @@ end
 
     @test rc_32.b ≈ wc.b
     @test rc_32.C ≈ wc.C
+    @test rc_32.A ≈ wc.A
     @test rc_32.W ≈ wc.W
     @test rc_32.W2 ≈ wc.W2
 
     @test rc2_32.b ≈ wc.b
     @test rc2_32.C ≈ wc.C
+    @test rc2_32.A ≈ wc.A
     @test rc2_32.W ≈ wc.W
     @test rc2_32.W2 ≈ wc.W2
 
