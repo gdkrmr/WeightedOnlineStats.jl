@@ -131,12 +131,13 @@ end
 
     o2 = copy(o)
 
-    @test Ref(o.C) != Ref(o2.C)
-    @test Ref(o.A) != Ref(o2.A)
-    @test Ref(o.b) != Ref(o2.b)
-    @test Ref(o.W) != Ref(o2.W)
-    @test Ref(o.W2) != Ref(o2.W2)
-    @test Ref(o.n) != Ref(o2.n)
+    @test o !== o2
+    @test o.C !== o2.C
+    @test o.A !== o2.A
+    @test o.b !== o2.b
+    # @test o.W !== o2.W
+    # @test o.W2 !== o2.W2
+    # @test o.n !== o2.n
 
     @test o.C == o2.C
     @test o.A == o2.A

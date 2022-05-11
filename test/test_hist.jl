@@ -62,9 +62,10 @@ end
     o1 = WeightedAdaptiveHist(20)
     o2 = copy(o1)
 
-    @test Ref(o2.alg.value, 1) != Ref(o1.alg.value, 1)
-    @test Ref(o2.alg.b)        != Ref(o1.alg.b)
-    @test Ref(o2.alg.ex)       != Ref(o1.alg.ex)
+    @test o1 !== o2
+    @test o2.alg.value !== o1.alg.value
+    # @test o2.alg.b     !== o1.alg.b
+    @test o2.alg.ex    !== o1.alg.ex
 end
 
 @testset "WeightedAdaptiveHist constructor" begin
