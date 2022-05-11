@@ -16,23 +16,25 @@ using MultivariateStats
 Random.seed!(124)
 l = 1000
 x = rand(l);
-xmis = convert(Array{Union{Float64, Missing}}, x);
+xmis = convert(Array{Union{Float64,Missing}}, x);
 x2 = rand(l, 5)
-x2mis = convert(Array{Union{Float64, Missing}}, x2)
+x2mis = convert(Array{Union{Float64,Missing}}, x2)
 x2mis[end, 1] = missing
-x2mis[end - 1, 1] = missing
+x2mis[end-1, 1] = missing
 w = rand(l);
-wmis = convert(Array{Union{Float64, Missing}}, w);
+wmis = convert(Array{Union{Float64,Missing}}, w);
 wmis[end] = missing
-wmis[end - 2] = missing
+wmis[end-2] = missing
 
 Base.isapprox(x::Tuple, y::Tuple) =
     reduce(&, map((a, b) -> a ≈ b, x, y))
 
-missing_to_nan(x::Array{Union{Missing, T}}) where T = map(y -> y === missing ? T(NaN) : y, x)
+missing_to_nan(x::Array{Union{Missing,T}}) where {T} = map(y -> y === missing ? T(NaN) : y, x)
 
-function test_fit(T::Type{<: WeightedOnlineStats.WeightedOnlineStat{S}},
-                  data, weights, unpack_fun, jfun) where S
+function test_fit(
+    T::Type{<:WeightedOnlineStats.WeightedOnlineStat{S}},
+    data, weights, unpack_fun, jfun
+) where {S}
     l = length(data)
     @assert l == length(weights)
 
