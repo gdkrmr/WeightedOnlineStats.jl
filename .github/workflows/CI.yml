@@ -35,6 +35,9 @@ jobs:
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
+      - name: Instantiate
+        run: julia --project=docs 'using Pkg; Pkg.instantiate()'
+      - name: Build and Deploy Documentation
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
