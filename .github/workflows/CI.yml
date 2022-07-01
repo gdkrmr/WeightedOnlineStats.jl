@@ -38,7 +38,7 @@ jobs:
       - name: Instantiate
         run: julia --project=docs 'using Pkg; Pkg.instantiate()'
       - name: Build and Deploy Documentation
-      - run: julia --project=docs docs/make.jl
+        run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
