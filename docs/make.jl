@@ -2,7 +2,7 @@ using Documenter, WeightedOnlineStats
 
 makedocs(sitename = "WeightedOnlineStats.jl")
 
-cname = open("docs/build/CNAME")
+cname = open("docs/build/CNAME", "w")
 write(cname, "www.guido-kraemer.com")
 close(cname)
 
