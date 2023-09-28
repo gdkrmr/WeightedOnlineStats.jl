@@ -31,6 +31,9 @@ include("var.jl")
 include("covmatrix.jl")
 
 export pca
+"""
+    `pca` creates a PCA object from a `WeightedCovMatrix` object. Requires MultivariateStats to be loaded!
+"""
 function pca end
 if !isdefined(Base, :get_extension)
     include("../ext/PcaExt.jl")
