@@ -18,10 +18,17 @@ OnlineStatsBase = "1"
 StatsBase = "0.32.1, 0.33, 0.34"
 julia = "1"
 
+[extensions]
+PcaExt = "MultivariateStats"
+
 [extras]
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+MultivariateStats = "6f286f6a-111f-5878-ab1e-185364afe411"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Random", "StatsBase"]
+test = ["Test", "Random", "StatsBase", "MultivariateStats"]
+
+[weakdeps]
+MultivariateStats = "6f286f6a-111f-5878-ab1e-185364afe411"

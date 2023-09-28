@@ -1,3 +1,7 @@
+module PcaExt
+
+using WeightedOnlineStats
+
 import StatsBase
 import StatsBase: ZScoreTransform
 export ZScoreTransform
@@ -9,7 +13,7 @@ import MultivariateStats:
     predict
 
 export
-    pca, PCA, pcacov, indim, outdim, projection, principalvar, principalvars,
+    PCA, pcacov, indim, outdim, projection, principalvar, principalvars,
     tprincipalvar, tresidualvar, tvar, principalratio, transform, reconstruct
 
 """
@@ -29,7 +33,7 @@ from a `WeightedCovMatrix`.
     c = fit!(WeightedCovMatrix(), rand(4, 100), rand(100))
     t, p = pca(c)
 """
-function pca(
+function WeightedOnlineStats.pca(
     x::WeightedCovMatrix{T};
     cov_pca::Bool = false,
     maxoutdim::Int = size(x, 1),
@@ -85,3 +89,5 @@ end
 #     return x
 # end
 
+
+end # module
