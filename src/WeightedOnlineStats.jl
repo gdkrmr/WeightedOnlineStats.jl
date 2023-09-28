@@ -29,7 +29,13 @@ include("sum.jl")
 include("mean.jl")
 include("var.jl")
 include("covmatrix.jl")
-include("pca.jl")
+
+export pca
+function pca end
+if !isdefined(Base, :get_extension)
+    include("../ext/PcaExt.jl")
+end
+
 include("histogram.jl")
 
 end # module WeightedOnlineStats
