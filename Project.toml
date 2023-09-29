@@ -1,7 +1,7 @@
 name = "WeightedOnlineStats"
 uuid = "bbac0a1f-7c9d-5672-960b-c6ca726e5d5d"
 authors = ["Guido Kraemer <gdkrmr@users.noreply.github.com>", "Martin Gutwin <twinGu@users.noreply.github.com>"]
-version = "0.6.1"
+version = "0.6.3"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
