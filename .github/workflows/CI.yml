@@ -1,5 +1,6 @@
-name: CI
+# from https://discourse.julialang.org/t/easy-workflow-file-for-setting-up-github-actions-ci-for-your-julia-package/49765
 
+name: CI
 on:
   pull_request:
     branches:
@@ -10,35 +11,43 @@ on:
     tags: '*'
 jobs:
   test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        julia-version: ['1.6', '1', 'nightly']
-        julia-arch: [x64, x86]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        exclude:
-          - os: macOS-latest
-            julia-arch: x86
-
+        version:
+          - 'min' # the minimum Julia version that your package supports
+          - '1'   # will automatically expand to the latest stable 1.x release of Julia.
+          # NOTE: CI on nightly is not enabled by default, uncomment if you need it. Cf the discussion at
+          # https://discourse.julialang.org/t/why-do-packages-run-continuous-integration-tests-on-julia-nightly/101208/3
+          # - 'nightly'
+        os:
+          - ubuntu-latest
+        arch:
+          - x64
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@latest
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v3
         with:
-          version: ${{ matrix.julia-version }}
-      - uses: julia-actions/julia-buildpkg@latest
-      - uses: julia-actions/julia-runtest@latest
-
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
-        with:
-          version: '1'
-      - name: Instantiate
-        run: julia --project=docs -e 'using Pkg; Pkg.instantiate()'
-      - name: Build and Deploy Documentation
-        run: julia --project=docs docs/make.jl
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: actions/cache@v5
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v6
+        with:
+          file: lcov.info
+          # NOTE: you need to add the token to Github secrets, see
+          # https://docs.codecov.com/docs/adding-the-codecov-token
+          token: ${{ secrets.CODECOV_TOKEN }}
