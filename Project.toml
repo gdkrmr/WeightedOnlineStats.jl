@@ -24,7 +24,7 @@ OnlineStatsBase = "1"
 Statistics = "1"
 LinearAlgebra = "1"
 StatsBase = "0.32.1, 0.33, 0.34"
-julia = "1"
+julia = "1.6"
 
 [extras]
 MultivariateStats = "6f286f6a-111f-5878-ab1e-185364afe411"
