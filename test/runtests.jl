@@ -1,7 +1,13 @@
 # using Revise
 # using Pkg
 # cd("..")
-# Pkg.activate(".")
+# Pkg.activate(;temp=true)
+# Pkg.add("MultivariateStats")
+# Pkg.add("OnlineStatsBase")
+# Pkg.add("OnlineStats")
+# Pkg.add("StatsBase")
+# Pkg.develop(path=".")
+# using Revise
 
 using Test
 using WeightedOnlineStats
