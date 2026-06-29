@@ -22,6 +22,11 @@ function OnlineStatsBase.fit!(o::WeightedOnlineStat{VectorOb}, x::VectorOb, w::N
     _fit!(o, x, w)
     return o
 end
+# fixes https://github.com/gdkrmr/WeightedOnlineStats.jl/issues/59
+function OnlineStatsBase.fit!(o::WeightedOnlineStat{VectorOb}, x::VectorOb, w::Integer)
+    _fit!(o, x, w)
+    return o
+end
 OnlineStatsBase.fit!(o::WeightedOnlineStat{VectorOb}, xi::VectorOb, wi::Missing) = o
 
 function OnlineStatsBase.fit!(o::WeightedOnlineStat, y, w::AbstractVector)
