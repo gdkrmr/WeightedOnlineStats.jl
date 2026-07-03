@@ -27,7 +27,12 @@ function OnlineStatsBase._fit!(o::WeightedMean{T}, x, w) where T
 
     o.n += 1
     o.W = smooth(o.W, ww, T(1) / o.n)
-    o.μ = smooth(o.μ, xx, ww / (o.W * o.n))
+
+    if isnan(o.μ)
+        o.μ = smooth(T(0), xx, ww / (o.W * o.n))
+    else
+        o.μ = smooth(o.μ, xx, ww / (o.W * o.n))
+    end
 
     o
 end
@@ -38,6 +43,13 @@ function OnlineStatsBase._merge!(o::WeightedMean{T}, o2::WeightedMean) where T
 
     o.n += o2.n
     o.W = smooth(o.W, o2_W, o2.n / o.n)
+
+    if isnan(o.μ)
+        o.μ = T(0)
+    end
+    if isnan(o2_μ)
+        o2_μ = T(0)
+    end
     o.μ = smooth(o.μ, o2_μ, (o2_W * o2.n) / (o.W * o.n))
 
     o
