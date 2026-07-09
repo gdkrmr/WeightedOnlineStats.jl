@@ -55,6 +55,13 @@
     @test s ≈ svalt
     @test s ≈ szip
 
+    # issue #42, weighted mean with zero weights
+    szerow, mzerow, czerow = fit!(WeightedCovMatrix(), vcat(rand(d), x2) , [0, w...]) |>
+                     x -> (sum(x), mean(x), cov(x))
+    @test s ≈ szerow
+    @test m ≈ mzerow
+    @test c ≈ czerow
+
     # After implementing :probability, these should pass/not throw any more:
     @test_throws ErrorException mvalp, vvalp = fit!(WeightedCovMatrix(), x2, w) |>
                                                x -> (mean(x), cov(x, corrected = true, weight_type = :probability))

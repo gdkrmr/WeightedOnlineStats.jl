@@ -64,3 +64,14 @@ end
     @test WeightedMean() == WeightedMean(0.0, 0.0, 0)
     @test WeightedMean() == WeightedMean{Float64}(0, 0, 0)
 end
+
+@testset "issue #42, weighted mean with zero weights" begin
+    x = [1.0, 2.0, 3.0]
+    w = [0.0, 0.5, 1.0]
+    m = mean(x, weights(w))
+
+    o = WeightedMean()
+    fit!(o, x, w)
+    @test mean(o) == m
+end
+

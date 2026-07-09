@@ -50,6 +50,14 @@
     @test s ≈ svala
     @test s ≈ svalf
 
+    # issue #42, weighted mean with zero weights
+    szerow, mzerow, vzerow = fit!(WeightedVariance(), [rand(), x...], [0, w...]) |>
+        x -> (sum(x), mean(x), var(x))
+
+    @test szerow ≈ s
+    @test mzerow ≈ m
+    @test vzerow ≈ v
+
     # After implementing :probability, these should pass/not throw any more:
     @test_throws ErrorException mvalp, vvalp = fit!(WeightedVariance(), x, w) |>
         x -> (mean(x), var(x, corrected = true, weight_type = :probability))
