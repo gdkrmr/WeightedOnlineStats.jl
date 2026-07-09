@@ -19,6 +19,8 @@
     @test s ≈ s2val
     @test typeof(s2val) == Float32
     @test typeof(s2zip) == Float32
+
+    @test weightsum(fit!(WeightedSum(), x, w)) ≈ sum(w)
 end
 
 @testset "WeightedSum merge!" begin

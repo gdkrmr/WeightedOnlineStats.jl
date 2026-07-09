@@ -25,7 +25,7 @@ function WeightedOnlineStats._fit!(o::WeightedSum{T}, x, w) where T
     xx = convert(T, x)
 
     o.n += 1
-    o.W += smooth(o.W, ww, T(1) / o.n)
+    o.W = smooth(o.W, ww, T(1) / o.n)
     o.∑ += xx * ww
     o
 end
