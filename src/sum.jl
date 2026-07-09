@@ -3,6 +3,8 @@
 
 Simple weighted sum, tracked as type `T`.
 
+Note: This estimator has issues with catastrophic cancellation, and is not recommended for use with large numbers of samples. Use `WeightedMean` or `WeightedVariance` instead.
+
 # Example:
     o = fit!(WeightedSum(), rand(100), rand(100))
     sum(o)
