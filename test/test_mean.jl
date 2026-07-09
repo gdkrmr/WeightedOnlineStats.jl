@@ -91,7 +91,7 @@ end
     @test mean(o) === 1.0
     # mean is 1
     fit!(o, x[2], w[2])
-    @test mean(o) === NaN
+    @test isnan(mean(o))
     # mean is NaN because the weight is negative. The negative weight is
     # "deleting" another weight. So here we should have the same state as a new
     # WeightedMean() with no data. The mean is undefined.
@@ -99,14 +99,14 @@ end
     @test  mean(o) === 2.0
     # the mean is 2 because we "deleted" the first value with the second
     fit!(o, x[4], w[4])
-    @test mean(o) === NaN
+    @test isnan(mean(o))
     # the mean is NaN because we "deleted" the third value with the fourth
 
     o1 = WeightedMean()
     o2 = WeightedMean()
 
     fit!(o1, x[1:2], w[1:2])
-    @test mean(o1) === NaN
+    @test isnan(mean(o1))
     fit!(o2, 1.0, 1.0)
     @test mean(o2) === 1.0
     merge!(o1, o2)
@@ -116,7 +116,7 @@ end
     o2 = WeightedMean()
 
     fit!(o1, x[1:2], w[1:2])
-    @test mean(o1) === NaN
+    @test isnan(mean(o1))
     fit!(o2, 1.0, 1.0)
     @test mean(o2) === 1.0
     merge!(o2, o1)
