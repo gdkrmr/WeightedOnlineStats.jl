@@ -15,6 +15,7 @@ function OnlineStatsBase.fit!(o::WeightedOnlineStat, xi::Number, wi::Number)
 end
 OnlineStatsBase.fit!(o::WeightedOnlineStat, xi::Missing, wi::Number) = o
 OnlineStatsBase.fit!(o::WeightedOnlineStat, xi::Number, wi::Missing) = o
+OnlineStatsBase.fit!(o::WeightedOnlineStat, xi::Missing, wi::Missing) = o
 
 
 # The missing cases in x are dealt with in the dispatch of _fit!
