@@ -55,6 +55,11 @@
     @test s ≈ svalt
     @test s ≈ szip
 
+    @test nobs(o) == l
+    @test nobs(o_32) == l
+    @test weightsum(o) ≈ sum(w)
+    @test weightsum(o_32) ≈ sum(w)
+
     # issue #42, weighted mean with zero weights
     szerow, mzerow, czerow = fit!(WeightedCovMatrix(), vcat(rand(d), x2) , [0, w...]) |>
                      x -> (sum(x), mean(x), cov(x))
