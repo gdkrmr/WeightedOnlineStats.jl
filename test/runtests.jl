@@ -54,6 +54,13 @@ function test_fit(
 
     @test unpack_fun(o) ≈ jfun(data, weights)
     @test eltype(unpack_fun(o)) == eltype(o)
+
+    i_nonmissing = .!(ismissing.(data) .| ismissing.(weights))
+    l_nonmissing = sum(i_nonmissing)
+    wsum_nonmissing = sum(weights[i_nonmissing])
+
+    @test nobs(o) == l_nonmissing
+    @test weightsum(o) ≈ wsum_nonmissing
 end
 
 include("test_hist.jl")
