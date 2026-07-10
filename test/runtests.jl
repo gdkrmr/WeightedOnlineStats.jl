@@ -30,10 +30,13 @@ x2 = rand(l, d)
 x2mis = convert(Array{Union{Float64,Missing}}, x2)
 x2mis[end, 1] = missing
 x2mis[end-1, 1] = missing
+x2mis[end-2, :] .= missing
+x2mis[end-3, :] .= missing
 w = rand(l);
 wmis = convert(Array{Union{Float64,Missing}}, w);
 wmis[end] = missing
 wmis[end-2] = missing
+wmis[end-4] = missing
 
 Base.isapprox(x::Tuple, y::Tuple) =
     reduce(&, map((a, b) -> a ≈ b, x, y))
