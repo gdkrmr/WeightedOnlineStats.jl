@@ -23,6 +23,8 @@ Random.seed!(124)
 l = 1000
 x = rand(l);
 xmis = convert(Array{Union{Float64,Missing}}, x);
+xmis[end] = missing
+xmis[end-1] = missing
 d = 5
 x2 = rand(l, d)
 x2mis = convert(Array{Union{Float64,Missing}}, x2)
