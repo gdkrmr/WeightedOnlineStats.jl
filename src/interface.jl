@@ -10,9 +10,7 @@ Base.eltype(o::WeightedOnlineStat{T}) where T = T
 ##############################################################
 
 function OnlineStatsBase.fit!(o::WeightedOnlineStat, xi::Number, wi::Number)
-    if wi != 0
-        _fit!(o, xi, wi)
-    end
+    _fit!(o, xi, wi)
     return o
 end
 OnlineStatsBase.fit!(o::WeightedOnlineStat, xi::Missing, wi::Number) = o
@@ -21,16 +19,12 @@ OnlineStatsBase.fit!(o::WeightedOnlineStat, xi::Number, wi::Missing) = o
 
 # The missing cases in x are dealt with in the dispatch of _fit!
 function OnlineStatsBase.fit!(o::WeightedOnlineStat{VectorOb}, x::VectorOb, w::Number)
-    if w != 0
-        _fit!(o, x, w)
-    end
+    _fit!(o, x, w)
     return o
 end
 # fixes https://github.com/gdkrmr/WeightedOnlineStats.jl/issues/59
 function OnlineStatsBase.fit!(o::WeightedOnlineStat{VectorOb}, x::VectorOb, w::Integer)
-    if w != 0
-        _fit!(o, x, w)
-    end
+    _fit!(o, x, w)
     return o
 end
 OnlineStatsBase.fit!(o::WeightedOnlineStat{VectorOb}, xi::VectorOb, wi::Missing) = o

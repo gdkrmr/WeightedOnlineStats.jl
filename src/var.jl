@@ -36,11 +36,14 @@ function OnlineStatsBase._fit!(o::WeightedVariance{T}, x, w) where T
     γ1 = T(1) / o.n
     o.W = smooth(o.W, ww, γ1)
     o.W2 = smooth(o.W2, ww * ww, γ1)
-    γ = ww / (o.W * o.n)
-    μ = o.μ
 
-    o.μ = smooth(o.μ, xx, γ)
-    o.σ2 = smooth(o.σ2, (xx - o.μ) * (xx - μ), γ)
+    if o.W != 0
+        γ = ww / (o.W * o.n)
+        μ = o.μ
+
+        o.μ = smooth(o.μ, xx, γ)
+        o.σ2 = smooth(o.σ2, (xx - o.μ) * (xx - μ), γ)
+    end
 
     return o
 end

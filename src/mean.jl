@@ -27,7 +27,9 @@ function OnlineStatsBase._fit!(o::WeightedMean{T}, x, w) where T
 
     o.n += 1
     o.W = smooth(o.W, ww, T(1) / o.n)
-    o.μ = smooth(o.μ, xx, ww / (o.W * o.n))
+    if o.W != 0
+        o.μ = smooth(o.μ, xx, ww / (o.W * o.n))
+    end
 
     o
 end
