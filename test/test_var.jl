@@ -14,7 +14,7 @@
              (x, w) -> begin
                 ## doesn't work:
                 # idx = findall((x) -> !ismissing(x[1]) & !ismissing(x[2]), zip(x, w))
-                idx = findall(.!ismissing(x) .& .!ismissing.(w))
+                idx = .!(ismissing.(x) .| ismissing.(w))
                 xx = Float64.(x[idx])
                 ww = Float64.(w[idx])
                 (var(xx, aweights(ww), corrected = true), mean(xx, aweights(ww)))

@@ -3,7 +3,7 @@
     test_fit(WeightedMean{Float32}, x, w, mean, (x, w) -> mean(x, weights(w)))
 
     test_fit(WeightedMean{Float64}, xmis, wmis, mean,
-        (x, w) -> sum(skipmissing(x .* w)) / sum(skipmissing(w)))
+        (x, w) -> sum(skipmissing(x .* w)) / sum(skipmissing(w[.!ismissing.(x)])))
 
     m = mean(x, weights(w))
     s = sum(broadcast(*, w, x))
