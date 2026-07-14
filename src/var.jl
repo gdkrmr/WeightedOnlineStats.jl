@@ -3,11 +3,30 @@
 
 Simple weighted variance, tracked as type `T`.
 
+The uncorrected weighted variance is calculated as `var(o, corrected = false)` and is equivalent to the following formula:
+```math
+\\sigma_w^2 = \\frac {\\sum_{i=1}^N w_i \\left( x_i - \\bar{x}_w \\right)^2}{\\sum_{i=1}^N w_i}
+```
+
+Analytic weights represent measurement accuracy for observations to get an unbiased estimator, the following correction is used if `var(o, corrected = true, weight_type = :analytic)` is called:
+```math
+s_w^2 = \\frac{\\sum_{i=1}^{n} w_i} {\\left(\\sum_{i=1}^{n} w_i\\right)^2 - \\sum_{i=1}^{n} w_i^2} \\sum_{i=1}^{n} w_i \\left(x_i - \\bar{x}_w\\right)^2
+```
+
+Frequency weights represent counts to get an unbiased estimator, the following correction is used if `var(o, corrected = true, weight_type = :frequency)` is called:
+```math
+s_w^2 = \\frac {\\sum_{i=1}^N w_i \\left( x_i - \\bar{x}_w \\right)^2}{\\sum_{i=1}^N w_i}
+```
+
+
+
 # Example:
     o = fit!(WeightedVariance(), rand(100), rand(100))
     sum(o)
     mean(o)
-    var(o)
+    var(o, corrected = false)
+    var(o, corrected = true, weight_type = :frequency)
+    var(o, corrected = true, weight_type = :analytic)
     std(o)
 """
 mutable struct WeightedVariance{T} <: WeightedOnlineStat{T}

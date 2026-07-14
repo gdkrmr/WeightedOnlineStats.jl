@@ -3,7 +3,12 @@
 
 Simple weighted mean, tracked as type `T`.
 
+```math
+\bar{x}_w = \frac{\sum_{i=1}^{n} w_{i}x_{i}}{\sum_{i=1}^{n} w_{i}}
+```
+
 # Example:
+
     o = fit!(WeightedMean(), rand(100), rand(100))
     sum(o)
     mean(o)
