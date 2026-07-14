@@ -14,7 +14,7 @@
              (x, w) -> begin
                 ## doesn't work:
                 # idx = findall((x) -> !ismissing(x[1]) & !ismissing(x[2]), zip(x, w))
-                idx = findall(.!ismissing(x) .& .!ismissing.(w))
+                idx = .!(ismissing.(x) .| ismissing.(w))
                 xx = Float64.(x[idx])
                 ww = Float64.(w[idx])
                 (var(xx, aweights(ww), corrected = true), mean(xx, aweights(ww)))
@@ -49,6 +49,14 @@
     @test s ≈ szip
     @test s ≈ svala
     @test s ≈ svalf
+
+    # issue #42, weighted mean with zero weights
+    szerow, mzerow, vzerow = fit!(WeightedVariance(), [rand(), x...], [0, w...]) |>
+        x -> (sum(x), mean(x), var(x))
+
+    @test szerow ≈ s
+    @test mzerow ≈ m
+    @test vzerow ≈ v
 
     # After implementing :probability, these should pass/not throw any more:
     @test_throws ErrorException mvalp, vvalp = fit!(WeightedVariance(), x, w) |>

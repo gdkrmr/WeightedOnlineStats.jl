@@ -23,14 +23,20 @@ Random.seed!(124)
 l = 1000
 x = rand(l);
 xmis = convert(Array{Union{Float64,Missing}}, x);
-x2 = rand(l, 5)
+xmis[end] = missing
+xmis[end-1] = missing
+d = 5
+x2 = rand(l, d)
 x2mis = convert(Array{Union{Float64,Missing}}, x2)
 x2mis[end, 1] = missing
 x2mis[end-1, 1] = missing
+x2mis[end-2, :] .= missing
+x2mis[end-3, :] .= missing
 w = rand(l);
 wmis = convert(Array{Union{Float64,Missing}}, w);
 wmis[end] = missing
 wmis[end-2] = missing
+wmis[end-4] = missing
 
 Base.isapprox(x::Tuple, y::Tuple) =
     reduce(&, map((a, b) -> a ≈ b, x, y))
@@ -51,6 +57,13 @@ function test_fit(
 
     @test unpack_fun(o) ≈ jfun(data, weights)
     @test eltype(unpack_fun(o)) == eltype(o)
+
+    i_nonmissing = .!(ismissing.(data) .| ismissing.(weights))
+    l_nonmissing = sum(i_nonmissing)
+    wsum_nonmissing = sum(weights[i_nonmissing])
+
+    @test nobs(o) == l_nonmissing
+    @test weightsum(o) ≈ wsum_nonmissing
 end
 
 include("test_hist.jl")

@@ -61,15 +61,20 @@ function _fit!(o::WeightedCovMatrix{T}, x, w) where {T}
     γ1 = T(1) / o.n
     o.W = smooth(o.W, ww, γ1)
     o.W2 = smooth(o.W2, ww * ww, γ1)
-    γ2 = ww / (o.W * o.n)
-    if isempty(o.A)
-        p = length(xx)
-        o.b = zeros(T, p)
-        o.A = zeros(T, p, p)
-        o.C = zeros(T, p, p)
+
+    if o.W != 0
+        γ2 = ww / (o.W * o.n)
+        if isempty(o.A)
+            p = length(xx)
+            o.b = zeros(T, p)
+            o.A = zeros(T, p, p)
+            o.C = zeros(T, p, p)
+        end
+        smooth!(o.b, xx, γ2)
+        smooth_syr!(o.A, xx, γ2)
     end
-    smooth!(o.b, xx, γ2)
-    smooth_syr!(o.A, xx, γ2)
+
+    return o
 end
 
 function _fit!(o::WeightedCovMatrix{T1},
