@@ -2,7 +2,7 @@
 
 [![Documentattion stable](https://img.shields.io/badge/documentation-stable%20release-blue?style=round-square)](https://gdkrmr.github.io/WeightedOnlineStats.jl/stable/)
 [![Documentation dev](https://img.shields.io/badge/documentation-in%20development-orange?style=round-square)](https://gdkrmr.github.io/WeightedOnlineStats.jl/stable/)
-[![DOI](https://zenodo.org/badge/156201284.svg)](https://zenodo.org/badge/latestdoi/156201284)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10074415.svg)](https://doi.org/10.5281/zenodo.10074415)
 [![CI](https://github.com/gdkrmr/WeightedOnlineStats.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/gdkrmr/WeightedOnlineStats.jl/actions/workflows/CI.yml)
 [![codecov.io](http://codecov.io/github/gdkrmr/WeightedOnlineStats.jl/coverage.svg?branch=master)](http://codecov.io/github/gdkrmr/WeightedOnlineStats.jl?branch=master)
 
