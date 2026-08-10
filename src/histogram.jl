@@ -7,8 +7,9 @@ import LinearAlgebra
 abstract type WeightedHistogramStat{T} <: WeightedOnlineStat{T} end
 abstract type WeightedHist{T} <: WeightedHistogramStat{T} end
 split_candidates(o::WeightedHistogramStat) = midpoints(o)
-Statistics.mean(o::WeightedHistogramStat) = mean(midpoints(o), fweights(counts(o)))
-Statistics.var(o::WeightedHistogramStat) = var(midpoints(o), fweights(counts(o)); corrected=true)
+
+Statistics.mean(o::WeightedHistogramStat) = mean(midpoints(o), aweights(counts(o)))
+Statistics.var(o::WeightedHistogramStat) = var(midpoints(o), aweights(counts(o)); corrected=true)
 Statistics.std(o::WeightedHistogramStat) = sqrt.(var(o))
 Statistics.median(o::WeightedHistogramStat) = quantile(o, .5)
 
@@ -128,19 +129,21 @@ end
 
 function Statistics.quantile(o::WeightedHist, p = [0, .25, .5, .75, 1])
     x, y = midpoints(o), counts(o)
+
     N = ndims(y)
     inds = findall(!iszero, y)
     yweights = fweights(y[inds])
     subset = collect(x)[inds]
     r = ntuple(N) do idim
       data = map(i->i[idim],subset)
-      quantile(data, fweights(y[inds]), p)
+      quantile(data, aweights(y[inds]), p)
     end
     if N==1
       return r[1]
     else
       return r
     end
+
 end
 
 function area(o::WeightedHist)
@@ -253,7 +256,7 @@ end
 function Statistics.quantile(o::WeightedAdaptiveHist, p = [0, .25, .5, .75, 1])
     mids, counts = value(o)
     inds = findall(x->x!=0, counts)  # filter out zero weights
-    quantile(mids[inds], fweights(counts[inds]), p)
+    quantile(mids[inds], aweights(counts[inds]), p)
 end
 
 function weightsum(o::WeightedAdaptiveHist)
