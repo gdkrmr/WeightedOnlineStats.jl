@@ -22,7 +22,7 @@ import Statistics
 import Statistics: mean, var, std, cov, cor, median, quantile
 import LinearAlgebra
 import LinearAlgebra: Hermitian, lmul!, rmul!, Diagonal, diag
-import StatsBase: midpoints
+import StatsBase: midpoints, aweights
 
 include("interface.jl")
 include("sum.jl")
